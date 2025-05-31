@@ -1,0 +1,181 @@
+# app/routers/applications.py
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+
+# Импорты из пакета app
+from app.database import get_db
+from app.schemas import ApplicationCreate, ApplicationOut, ApplicationUpdate
+from app.models import Application, Project, User
+from app.utils import get_current_active_user, require_freelancer
+
+router = APIRouter()
+
+
+@router.post(
+    "/projects/{project_id}/applications/",
+    response_model=ApplicationOut,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_application_for_project(
+    project_id: int,
+    application_in: ApplicationCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_freelancer),
+):
+    """
+    Фрилансер подаёт заявку на проект (project_id).
+    Каждый фрилансер может подать заявку на один и тот же проект только один раз.
+    """
+    # 1) Проверяем, что проект существует
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
+        )
+
+    # 2) Проверяем, что проект открыт для заявок
+    if project.status != "open":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Project is not open",
+        )
+
+    # 3) Проверяем, что фрилансер ещё не подавал заявку на этот проект
+    existing_app = (
+        db.query(Application)
+        .filter(
+            Application.project_id == project_id,
+            Application.freelancer_id == current_user.id,
+        )
+        .first()
+    )
+    if existing_app:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You have already applied to this project",
+        )
+
+    # 4) Создаём новую заявку
+    new_app = Application(
+        proposal_text=application_in.proposal_text,
+        proposed_price=application_in.proposed_price,
+        status=application_in.status,
+        freelancer_id=current_user.id,
+        project_id=project_id,
+    )
+    db.add(new_app)
+    db.commit()
+    db.refresh(new_app)
+    return new_app
+
+
+@router.get(
+    "/projects/{project_id}/applications/me",
+    response_model=ApplicationOut,
+    status_code=status.HTTP_200_OK,
+)
+def read_my_application(
+    project_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_freelancer),
+):
+    """
+    Проверка: есть ли заявка текущего фрилансера (current_user) на проект project_id.
+    Если есть — возвращаем её (200). Если нет — бросаем 404.
+    """
+    application = (
+        db.query(Application)
+        .filter(
+            Application.project_id == project_id,
+            Application.freelancer_id == current_user.id,
+        )
+        .first()
+    )
+    if not application:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Application not found",
+        )
+    return application
+
+
+@router.get("/", response_model=list[ApplicationOut])
+def read_applications(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    """
+    Получить все заявки (admin), без фильтрации.
+    """
+    applications_list = db.query(Application).offset(skip).limit(limit).all()
+    return applications_list
+
+
+@router.get("/{application_id}", response_model=ApplicationOut)
+def read_application(application_id: int, db: Session = Depends(get_db)):
+    application = db.query(Application).filter(Application.id == application_id).first()
+    if not application:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Application not found"
+        )
+    return application
+
+
+@router.put("/{application_id}", response_model=ApplicationOut)
+def update_application_status(
+    application_id: int,
+    application_in: ApplicationUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Обновление статуса заявки (только владелец проекта или admin).
+    """
+    application = (
+        db.query(Application).filter(Application.id == application_id).first()
+    )
+    if not application:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Application not found"
+        )
+
+    project = db.query(Project).filter(Project.id == application.project_id).first()
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
+        )
+
+    if project.employer_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized"
+        )
+
+    application.status = application_in.status
+    db.commit()
+    db.refresh(application)
+    return application
+
+
+@router.delete("/{application_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_application(
+    application_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Удаление заявки (только владелец заявки или admin).
+    """
+    application = (
+        db.query(Application).filter(Application.id == application_id).first()
+    )
+    if not application:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Application not found"
+        )
+
+    if application.freelancer_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized"
+        )
+
+    db.delete(application)
+    db.commit()
+    return

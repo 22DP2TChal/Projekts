@@ -1,0 +1,42 @@
+<!-- app/templates/index.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login — Freelance System</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
+</head>
+<body>
+  <div class="container">
+    <h2>Вход</h2>
+    <div id="loginMessage"></div>
+    <form id="loginForm">
+      <div>
+        <label for="loginEmail">Email</label>
+        <input type="email" id="loginEmail" required />
+      </div>
+      <div>
+        <label for="loginPassword">Пароль</label>
+        <input type="password" id="loginPassword" required />
+      </div>
+      <button type="submit">Войти</button>
+    </form>
+    <p style="margin-top: 12px;">
+      Нет аккаунта?
+      <a href="/register">Зарегистрироваться</a>
+    </p>
+  </div>
+
+  <!-- 
+    Добавляем параметр v=1.0 к каждому скрипту, чтобы сбрасывать кеш браузера.
+    При следующей правке JS инкрементируйте версию, например ?v=1.1, чтобы DevTools подхватил новые файлы.
+  -->
+  <script src="{{ url_for('static', path='js/common.js') }}?v=1.1"></script>
+  <script src="{{ url_for('static', path='js/login.js') }}?v=1.1"></script>
+
+</body>
+</html>

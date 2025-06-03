@@ -107,43 +107,33 @@ async function loadProjects(user) {
       return;
     }
 
-    projects.forEach(proj => {
-      const div = document.createElement("div");
-      div.className = "project-item";
+    // ...внутри loadProjects(user) после получения массива projects:
+  projects.forEach(proj => {
+    const card = document.createElement("div");
+    card.className = "card";
 
-      div.innerHTML = `
-        <h3>${proj.title}</h3>
+    card.innerHTML = `
+      <div class="card-header">${proj.title}</div>
+      <div class="card-body">
         <p>${proj.description || "<em>Без описания</em>"}</p>
-        <p><strong>Бюджет:</strong> ${proj.budget.toFixed(2)} ₽</p>
-        <small>Статус: ${proj.status} | Employer ID: ${proj.employer_id}</small>
-      `;
+        <p><strong>Бюджет:</strong> ₽${proj.budget.toFixed(2)}</p>
+      </div>
+      <div class="card-footer">
+        <span class="status">Статус: ${proj.status}</span>
+        <div>
+          ${user.role === "freelancer" && proj.status === "open"
+            ? `<button class="primary-btn" onclick="window.location.href='/projects/${proj.id}'">Подать заявку</button>`
+            : ""}
+          ${user.role === "employer" && proj.employer_id === user.id
+            ? `<button class="primary-btn" onclick="window.location.href='/projects/${proj.id}/applications'">Смотреть заявки</button>`
+            : ""}
+        </div>
+      </div>
+    `;
 
-      // Если роль = freelancer и проект открыт, добавляем кнопку «Подать заявку»
-      if (user.role === "freelancer" && proj.status === "open") {
-        const applyBtn = document.createElement("button");
-        applyBtn.innerText = "Подать заявку";
-        applyBtn.className = "btn-small";
-        applyBtn.style.marginTop = "8px";
-        applyBtn.addEventListener("click", () => {
-          window.location.href = `/projects/${proj.id}`;
-        });
-        div.appendChild(applyBtn);
-      }
+    document.getElementById("projectsList").appendChild(card);
+  });
 
-      // Если роль = employer и это его проект, добавляем кнопку «Смотреть заявки»
-      if (user.role === "employer" && proj.employer_id === user.id) {
-        const appsBtn = document.createElement("button");
-        appsBtn.innerText = "Смотреть заявки";
-        appsBtn.className = "btn-small";
-        appsBtn.style.marginLeft = "8px";
-        appsBtn.addEventListener("click", () => {
-          window.location.href = `/projects/${proj.id}/applications`;
-        });
-        div.appendChild(appsBtn);
-      }
-
-      projectsListDiv.appendChild(div);
-    });
   } catch (err) {
     console.log("[projects.js] Ошибка при загрузке проектов =", err);
     projectsMessage.innerHTML = `<p class="error">${err.message}</p>`;

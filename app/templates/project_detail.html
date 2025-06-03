@@ -5,119 +5,62 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Детали проекта — Freelance System</title>
-  <!-- Ваш общий CSS -->
   <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
   <style>
-    /* Немного встроенных стилей для оформления карточки проекта и формы */
-    .project-card {
-      max-width: 700px;
-      margin: 20px auto;
-      padding: 24px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-      background-color: #fff;
-    }
-    .project-header {
+    .detail-header {
+      margin-bottom: 20px;
+      font-family: var(--font-heading);
       font-size: 1.5rem;
-      margin-bottom: 12px;
-      color: #333;
+      color: var(--color-text);
     }
-    .project-body {
-      font-size: 1rem;
-      margin-bottom: 16px;
-      color: #555;
-    }
-    .project-footer {
-      font-size: 0.9rem;
-      color: #777;
-      margin-bottom: 24px;
-    }
-    .application-form {
+    .project-detail-card {
       max-width: 700px;
-      margin: 0 auto 40px;
-      padding: 24px;
-      border: 1px solid #eee;
-      border-radius: 8px;
-      background-color: #fafafa;
-    }
-    .application-form h3 {
-      margin-bottom: 16px;
-      color: #333;
-    }
-    .application-form label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 500;
-      color: #444;
-    }
-    .application-form textarea,
-    .application-form input[type="number"] {
-      width: 100%;
-      padding: 8px;
-      margin-bottom: 16px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      font-size: 0.95rem;
-      color: #333;
-    }
-    .application-form button {
-      padding: 10px 24px;
-      background-color: #007bff;
-      border: none;
-      border-radius: 4px;
-      font-size: 1rem;
-      color: #fff;
-      cursor: pointer;
-    }
-    .application-form button:disabled {
-      background-color: #aaa;
-      cursor: not-allowed;
-    }
-    .message {
-      margin-top: 12px;
-      font-size: 0.95rem;
-    }
-    .message.success {
-      color: green;
-    }
-    .message.error {
-      color: red;
+      margin: 0 auto 24px;
     }
   </style>
 </head>
 <body>
-  <nav style="max-width: 700px; margin: 20px auto; display: flex; justify-content: space-between; align-items: center;">
-    <a href="/projects" style="text-decoration: none; color: #007bff;">← Все проекты</a>
-    <button id="logoutBtn" style="background:none; border:none; color:#007bff; cursor:pointer;">Выйти</button>
+  <nav>
+    <div class="nav-left">
+      <a href="/projects" class="logo">← Все проекты</a>
+    </div>
+    <div class="nav-right">
+      <button id="logoutBtn">Выйти</button>
+    </div>
   </nav>
 
-  <!-- Карточка проекта -->
-  <div class="project-card" id="projectCard">
-    <div class="project-header" id="projectTitle">Загрузка…</div>
-    <div class="project-body" id="projectDescription">Пожалуйста, подождите, загружаем данные проекта…</div>
-    <div class="project-footer">
-      <span>Бюджет: </span><strong id="projectBudget">—</strong><br>
-      <span>Статус: </span><strong id="projectStatus">—</strong>
+  <div class="container">
+    <h2 class="detail-header">Детали проекта</h2>
+    <!-- Карточка с данными проекта -->
+    <div class="card project-detail-card" id="projectCard">
+      <div class="card-header" id="projectTitle">Загрузка…</div>
+      <div class="card-body">
+        <p id="projectDescription">Подождите, загружаем описание…</p>
+      </div>
+      <div class="card-footer">
+        <span class="status">Статус: <strong id="projectStatus">—</strong></span>
+        <span style="margin-left: 20px;"><strong>Бюджет:</strong> ₽<span id="projectBudget">—</span></span>
+      </div>
+    </div>
+
+    <!-- Форма подачи заявки (для фрилансера) -->
+    <div class="form-wrapper" id="applicationFormContainer">
+      <h3>Подать заявку</h3>
+      <div id="appMessage" class="message" style="display: none;"></div>
+      <form id="applicationForm">
+        <div class="form-group">
+          <label for="proposalText">Текст предложения</label>
+          <textarea id="proposalText" placeholder="Опишите ваше предложение…" required></textarea>
+        </div>
+        <div class="form-group">
+          <label for="proposalPrice">Ваша цена (₽)</label>
+          <input type="number" id="proposalPrice" step="0.01" min="0.01" placeholder="Например, 1000.00" required>
+        </div>
+        <button type="submit" class="primary-btn" id="submitAppBtn">Отправить заявку</button>
+      </form>
     </div>
   </div>
 
-  <!-- Форма подачи заявки -->
-  <div class="application-form" id="applicationFormContainer">
-    <h3>Подать заявку</h3>
-    <div id="appMessage" class="message"></div>
-    <form id="applicationForm">
-      <label for="proposalText">Ваше предложение</label>
-      <textarea id="proposalText" rows="4" placeholder="Опишите своё видение задачи…" required></textarea>
-
-      <label for="proposalPrice">Ваша цена</label>
-      <input type="number" id="proposalPrice" step="0.01" min="0.01" placeholder="Например, 100.00" required>
-
-      <button type="submit" id="submitAppBtn">Отправить заявку</button>
-    </form>
-  </div>
-
-  <!-- Подключаем JS: -->
   <script src="{{ url_for('static', path='js/common.js') }}?v=1.0"></script>
   <script src="{{ url_for('static', path='js/application.js') }}?v=1.0"></script>
 </body>

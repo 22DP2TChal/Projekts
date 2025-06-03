@@ -4,39 +4,53 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Login — Freelance System</title>
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
+  <title>Freelance System — Вход</title>
   <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
+  <style>
+    .login-container {
+      max-width: 400px;
+      margin: 60px auto;
+    }
+    .login-header {
+      text-align: center;
+      font-family: var(--font-heading);
+      margin-bottom: 24px;
+      color: var(--color-text);
+    }
+    /* Сообщение об ошибке/успехе. Скрываем изначально */
+    #loginMessage {
+      display: none;
+      margin-bottom: 16px;
+    }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <h2>Вход</h2>
-    <div id="loginMessage"></div>
-    <form id="loginForm">
-      <div>
-        <label for="loginEmail">Email</label>
-        <input type="email" id="loginEmail" required />
-      </div>
-      <div>
-        <label for="loginPassword">Пароль</label>
-        <input type="password" id="loginPassword" required />
-      </div>
-      <button type="submit">Войти</button>
-    </form>
-    <p style="margin-top: 12px;">
-      Нет аккаунта?
-      <a href="/register">Зарегистрироваться</a>
-    </p>
+  <div class="container login-container">
+    <h2 class="login-header">Войти в систему</h2>
+
+    <!-- Блок, куда JS будет писать ошибки -->
+    <div id="loginMessage" class="message"></div>
+
+    <div class="form-wrapper">
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="loginEmail">Email</label>
+          <input type="email" id="loginEmail" placeholder="Введите email" required>
+        </div>
+        <div class="form-group">
+          <label for="loginPassword">Пароль</label>
+          <input type="password" id="loginPassword" placeholder="Введите пароль" required>
+        </div>
+        <button type="submit" class="primary-btn" style="width: 100%;">Войти</button>
+      </form>
+    </div>
+
+    <div class="login-link" style="text-align: center; margin-top: 16px;">
+      Нет аккаунта? <a href="/register">Зарегистрируйтесь</a>
+    </div>
   </div>
 
-  <!-- 
-    Добавляем параметр v=1.0 к каждому скрипту, чтобы сбрасывать кеш браузера.
-    При следующей правке JS инкрементируйте версию, например ?v=1.1, чтобы DevTools подхватил новые файлы.
-  -->
-  <script src="{{ url_for('static', path='js/common.js') }}?v=1.1"></script>
-  <script src="{{ url_for('static', path='js/login.js') }}?v=1.1"></script>
-
+  <script src="{{ url_for('static', path='js/common.js') }}?v=1.0"></script>
+  <script src="{{ url_for('static', path='js/login.js') }}?v=1.0"></script>
 </body>
 </html>

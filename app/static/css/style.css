@@ -1,159 +1,297 @@
 /* app/static/css/style.css */
 
+/* ──────────────────────────────────────────────────────────
+   Переменные для цветовой схемы и типографики
+────────────────────────────────────────────────────────── */
+:root {
+  --color-bg: #f7f8fa;
+  --color-card-bg: #ffffff;
+  --color-primary: #007bff;
+  --color-primary-hover: #0056b3;
+  --color-accent: #17a2b8;
+  --color-text: #333333;
+  --color-subtext: #555555;
+  --color-border: #e0e0e0;
+  --color-error-bg: #ffe3e3;
+  --color-error-text: #a80000;
+  --color-success-bg: #e3f9e5;
+  --color-success-text: #226622;
+
+  --font-base: 'Arial', sans-serif;
+  --font-heading: 'Segoe UI', Tahoma, sans-serif;
+
+  --radius-card: 8px;
+  --radius-button: 4px;
+
+  --shadow-light: 0 2px 4px rgba(0,0,0,0.04);
+  --shadow-medium: 0 4px 8px rgba(0,0,0,0.08);
+}
+
+/* ──────────────────────────────────────────────────────────
+   Базовые стили
+────────────────────────────────────────────────────────── */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-body {
-  font-family: Arial, sans-serif;
-  background-color: #f4f4f4;
+html, body {
+  height: 100%;
+  font-family: var(--font-base);
+  background-color: var(--color-bg);
+  color: var(--color-text);
   line-height: 1.6;
-  color: #333;
 }
 
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* ──────────────────────────────────────────────────────────
+   Контейнер для центровки главной области
+────────────────────────────────────────────────────────── */
 .container {
-  max-width: 600px;
-  margin: 40px auto;
-  background: #fff;
-  padding: 20px 30px;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
 }
 
-h1, h2 {
-  margin-bottom: 20px;
-  color: #333;
-  text-align: center;
-}
-
-form > div {
-  margin-bottom: 15px;
-}
-
-label {
-  display: block;
-  font-weight: bold;
-  margin-bottom: 6px;
-  color: #555;
-}
-
-input[type="text"],
-input[type="email"],
-input[type="password"],
-input[type="number"],
-select,
-textarea {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-textarea {
-  resize: vertical;
-}
-
-button {
-  display: inline-block;
-  background: #007bff;
-  color: #fff;
-  border: none;
-  padding: 10px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-button:hover {
-  background: #0056b3;
-}
-
-.hidden {
-  display: none;
-}
-
-.error {
-  color: #d9534f;
-  margin-bottom: 10px;
-}
-
-.success {
-  color: #28a745;
-  margin-bottom: 10px;
-}
-
+/* ──────────────────────────────────────────────────────────
+   Навигационная панель (header)
+────────────────────────────────────────────────────────── */
 nav {
-  background: #007bff;
+  background-color: var(--color-card-bg);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 24px;
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-light);
+  margin-bottom: 24px;
+}
+
+nav .nav-left {
+  display: flex;
+  align-items: center;
+}
+
+nav .nav-left a.logo {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: var(--color-primary);
+}
+
+nav .nav-right button {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 4px 8px;
+}
+
+nav .nav-right button:hover {
+  color: var(--color-primary-hover);
+}
+
+/* ──────────────────────────────────────────────────────────
+   Карточки (Projects и Applications)
+────────────────────────────────────────────────────────── */
+.card {
+  background: var(--color-card-bg);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-light);
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.card + .card {
+  margin-top: 12px;
+}
+
+.card-header {
+  padding: 16px;
+  background-color: var(--color-accent);
   color: #fff;
-  padding: 10px 30px;
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+}
+
+.card-body {
+  padding: 16px;
+}
+
+.card-body p {
+  margin-bottom: 8px;
+  color: var(--color-subtext);
+}
+
+.card-footer {
+  padding: 12px 16px;
+  background-color: #fafafa;
+  border-top: 1px solid var(--color-border);
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-nav a {
+.card-footer .status {
+  font-size: 0.9rem;
+  color: var(--color-subtext);
+}
+
+/* ──────────────────────────────────────────────────────────
+   Сетка для карточек проектов на странице списка
+────────────────────────────────────────────────────────── */
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+/* ──────────────────────────────────────────────────────────
+   Карточки для заявок (две колонки на десктопе, одна — на мобильном)
+────────────────────────────────────────────────────────── */
+.applications-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 20px;
+  margin-top: 16px;
+}
+
+/* ──────────────────────────────────────────────────────────
+   Форма (inputs, textarea, кнопки)
+────────────────────────────────────────────────────────── */
+.form-wrapper {
+  background: var(--color-card-bg);
+  border-radius: var(--radius-card);
+  padding: 24px;
+  box-shadow: var(--shadow-light);
+  margin-bottom: 24px;
+}
+
+.form-wrapper h3 {
+  margin-bottom: 16px;
+  font-family: var(--font-heading);
+  color: var(--color-text);
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: var(--color-subtext);
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  font-size: 1rem;
+  color: var(--color-text);
+  background: #fafafa;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  background: #fff;
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+button.primary-btn {
+  background-color: var(--color-primary);
   color: #fff;
-  text-decoration: none;
-  margin-left: 15px;
-}
-
-nav a:hover {
-  text-decoration: underline;
-}
-
-.projects-list {
-  margin-top: 20px;
-}
-
-.project-item {
-  border-bottom: 1px solid #ddd;
-  padding: 12px 0;
-}
-
-.project-item:last-child {
-  border-bottom: none;
-}
-
-.project-item h3 {
-  margin-bottom: 6px;
-  color: #007bff;
-}
-
-.project-item p {
-  margin-bottom: 6px;
-}
-
-.project-item small {
-  color: #555;
-}
-
-.btn-small {
-  background: #28a745;
-  padding: 6px 10px;
-  font-size: 0.9em;
-  border-radius: 4px;
-  margin-top: 6px;
-}
-
-.btn-small:hover {
-  background: #218838;
-}
-
-.create-project-wrapper {
-  margin-top: 30px;
-  border-top: 1px solid #ddd;
-  padding-top: 20px;
-}
-
-.logout-btn {
-  background: transparent;
   border: none;
-  color: #fff;
-  font-weight: bold;
+  border-radius: var(--radius-button);
+  padding: 10px 20px;
+  font-size: 1rem;
   cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 
-.logout-btn:hover {
-  text-decoration: underline;
+button.primary-btn:hover {
+  background-color: var(--color-primary-hover);
 }
+
+button.primary-btn:disabled {
+  background-color: #a0c4ff;
+  cursor: not-allowed;
+}
+
+/* ──────────────────────────────────────────────────────────
+   Сообщения (ошибки / успех)
+────────────────────────────────────────────────────────── */
+.message {
+  padding: 14px 18px;
+  margin: 12px 0;
+  border-radius: var(--radius-button);
+  font-size: 0.95rem;
+}
+
+.message.error {
+  background-color: var(--color-error-bg);
+  color: var(--color-error-text);
+  border: 1px solid #d00000;
+}
+
+.message.success {
+  background-color: var(--color-success-bg);
+  color: var(--color-success-text);
+  border: 1px solid #059a21;
+}
+
+/* ──────────────────────────────────────────────────────────
+   Адаптивность: на очень узких экранах делаем все карточки в один столбец
+────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .applications-grid {
+    grid-template-columns: 1fr;
+  }
+  .projects-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* app/static/css/style.css */
+
+.message {
+  padding: 12px;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  margin-bottom: 16px;
+}
+
+/* Ошибки — красный фон и текст */
+.message.error {
+  background-color: #ffe3e3;
+  color: #a80000;
+  border: 1px solid #d00000;
+}
+
+/* Успех — зелёный фон и текст */
+.message.success {
+  background-color: #e3f9e5;
+  color: #226622;
+  border: 1px solid #059a21;
+}
+

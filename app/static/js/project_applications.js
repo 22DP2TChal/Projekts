@@ -1,20 +1,22 @@
-
+// app/static/js/project_applications.js
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const appsMessage = document.getElementById("appsMessage");
-  const cardsContainer = document.getElementById("cardsContainer");
+  const appsMessage    = document.getElementById("appsMessage");
+  const cardsContainer = document.getElementById("appsGrid"); // ← здесь должен быть "appsGrid"
+  const logoutBtn      = document.getElementById("logoutBtn");
 
-  document.getElementById("logoutBtn").addEventListener("click", logout);
+  logoutBtn.addEventListener("click", logout);
 
-  // Получаем projectId из URL: /projects/{id}/applications
+  // 1) Получаем projectId из URL: /projects/{id}/applications
   const pathParts = window.location.pathname.split("/");
+  // Например: ["", "projects", "123", "applications"]
   const projectId = pathParts[pathParts.length - 2];
 
-  // 1) Проверяем авторизацию
+  // 2) Проверяем авторизацию и получаем инфо о текущем пользователе
   const userInfo = await requireAuth();
-  if (!userInfo) return;
+  if (!userInfo) return; // если не авторизован, requireAuth() уже редиректнул
 
-  // 2) Запрашиваем заявки по API
+  // 3) Запрашиваем список заявок по API
   try {
     const resp = await fetch(
       `${API_BASE}/api/applications/projects/${projectId}/applications/`,
@@ -23,15 +25,17 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     );
 
-    // Обрабатываем возможные ошибки
+    // 3.a) Сценарии ошибок
     if (resp.status === 403) {
-      const data = await resp.json();
-      showMessage(data.detail || "Доступ запрещён", true);
+      const data = await resp.json().catch(() => ({}));
+      const msg = data.detail || "Доступ запрещён";
+      showMessage(msg, true);
       return;
     }
     if (resp.status === 404) {
-      const data = await resp.json();
-      showMessage(data.detail || "Проект не найден", true);
+      const data = await resp.json().catch(() => ({}));
+      const msg = data.detail || "Проект не найден";
+      showMessage(msg, true);
       return;
     }
     if (!resp.ok) {
@@ -41,28 +45,30 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    // Если вернулся 200 OK
+    // 3.b) Если 200 OK → рендерим карточки
     const applications = await resp.json();
 
-    // 3) Если заявок нет — выводим информационное сообщение
     if (!applications || applications.length === 0) {
       showMessage("Пока нет заявок на этот проект.", false);
       return;
     }
 
-    // 4) Рисуем карточки
-    appsMessage.style.display = "none"; // прячем сообщение, если раньше было
+    // Очистим контейнер
+    cardsContainer.innerHTML = "";
+    appsMessage.style.display = "none";
+
+    // 4) Создаём карточку для каждой заявки
     applications.forEach((app) => {
       const card = document.createElement("div");
       card.className = "app-card";
 
-      // Заголовок карточки: ID и email фрилансера
+      // Заголовок: ID и email фрилансера (если есть)
       const header = document.createElement("div");
       header.className = "app-card-header";
       header.innerText = `Заявка #${app.id} от ${app.freelancer_email || app.freelancer_id}`;
       card.appendChild(header);
 
-      // Основная часть: текст, цена, статус
+      // Тело карточки: текст, цена, статус
       const body = document.createElement("div");
       body.className = "app-card-body";
 
@@ -83,7 +89,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       card.appendChild(body);
 
-      // Подвал карточки: дата создания
+      // Подвал: дата создания
       const footer = document.createElement("div");
       footer.className = "app-card-footer";
       let createdAt = "";

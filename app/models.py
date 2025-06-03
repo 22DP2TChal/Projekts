@@ -28,6 +28,8 @@ class Project(Base):
     budget = Column(DECIMAL, nullable=False)
     status = Column(String, default="open")       # open, in_progress, closed и т.д.
     employer_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    status = Column(String)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False) 
 
     # Связи
     employer = relationship("User", back_populates="projects")

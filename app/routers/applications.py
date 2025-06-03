@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from typing import List
 
 # Импорты из пакета app
 from app.database import get_db
@@ -27,21 +28,21 @@ def create_application_for_project(
     Фрилансер подаёт заявку на проект (project_id).
     Каждый фрилансер может подать заявку на один и тот же проект только один раз.
     """
-    # 1) Проверяем, что проект существует
+    # Проверяем, что проект существует
     project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
         )
 
-    # 2) Проверяем, что проект открыт для заявок
+    # Проверяем, что проект открыт для заявок
     if project.status != "open":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Project is not open",
         )
 
-    # 3) Проверяем, что фрилансер ещё не подавал заявку на этот проект
+    # Проверяем, что фрилансер ещё не подавал заявку на этот проект
     existing_app = (
         db.query(Application)
         .filter(
@@ -56,7 +57,7 @@ def create_application_for_project(
             detail="You have already applied to this project",
         )
 
-    # 4) Создаём новую заявку
+    # Создаём новую заявку
     new_app = Application(
         proposal_text=application_in.proposal_text,
         proposed_price=application_in.proposed_price,
@@ -68,6 +69,43 @@ def create_application_for_project(
     db.commit()
     db.refresh(new_app)
     return new_app
+
+
+@router.get(
+    "/projects/{project_id}/applications/",
+    response_model=List[ApplicationOut],
+    status_code=status.HTTP_200_OK,
+)
+def read_applications_for_project(
+    project_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Возвращает все заявки на указанный проект (project_id).
+    Доступны только владельцу проекта (employer) или admin.
+    """
+    # Проверяем, что проект существует
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
+        )
+
+    # Проверяем, что текущий пользователь — владелец проекта либо админ
+    if project.employer_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to view applications for this project",
+        )
+
+    # Возвращаем все заявки, связанные с этим проектом
+    applications_list = (
+        db.query(Application)
+        .filter(Application.project_id == project_id)
+        .all()
+    )
+    return applications_list
 
 
 @router.get(
@@ -111,7 +149,9 @@ def read_applications(skip: int = 0, limit: int = 100, db: Session = Depends(get
 
 @router.get("/{application_id}", response_model=ApplicationOut)
 def read_application(application_id: int, db: Session = Depends(get_db)):
-    application = db.query(Application).filter(Application.id == application_id).first()
+    application = (
+        db.query(Application).filter(Application.id == application_id).first()
+    )
     if not application:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Application not found"

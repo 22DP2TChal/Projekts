@@ -1,30 +1,22 @@
 // app/static/js/projects.js
 
-/**
- * Скрипт для страницы “Список проектов”. 
- * Теперь, если у текущего user.role === "employer", показываем только те проекты, 
- * у которых project.employer_id === user.id. 
- * Фрилансеры видят все (или только “открытые”, если нужно).
- */
-
 document.addEventListener("DOMContentLoaded", async () => {
-  const navWelcome   = document.getElementById("navWelcome");
+  const navWelcome = document.getElementById("navWelcome");
   const navLogoutBtn = document.getElementById("navLogoutBtn");
-  const projectsListDiv    = document.getElementById("projectsList");
-  const projectsMessage    = document.getElementById("projectsMessage");
-  const createWrapper      = document.getElementById("createProjectWrapper");
-  const createForm         = document.getElementById("createProjectForm");
-  const createMsg          = document.getElementById("createProjectMessage");
+  const projectsListDiv = document.getElementById("projectsList");
+  const projectsMessage = document.getElementById("projectsMessage");
+  const createWrapper = document.getElementById("createProjectWrapper");
+  const createForm = document.getElementById("createProjectForm");
+  const createMsg = document.getElementById("createProjectMessage");
 
   // 1) Проверяем токен и получаем пользователя
   const user = await requireAuth();
   console.log("[projects.js] requireAuth вернул:", user);
   if (!user) return;  // если токен не валиден, requireAuth() уже сделал редирект
-  
   navWelcome.innerText = `Привет, ${user.email}!`;
   navLogoutBtn.addEventListener("click", logout);
 
-  // 2) Загружаем список проектов и рисуем (в loadProjects запишем фильтрацию)
+  // 2) Загружаем список проектов
   await loadProjects(user);
 
   // 3) Если роль = employer, показываем форму создания и вешаем обработчик
@@ -35,16 +27,16 @@ document.addEventListener("DOMContentLoaded", async () => {
       e.preventDefault();
       createMsg.innerHTML = "";
 
-      const title       = document.getElementById("projectTitle").value.trim();
+      const title = document.getElementById("projectTitle").value.trim();
       const description = document.getElementById("projectDescription").value.trim();
-      const budget      = parseFloat(document.getElementById("projectBudget").value);
+      const budget = parseFloat(document.getElementById("projectBudget").value);
 
       try {
         const token = getToken();
         console.log("[projects.js] Создание проекта, токен =", token);
         if (!token) throw new Error("Неавторизованный");
 
-        // Создаём новый проект через API: POST /api/projects/
+        // POST /api/projects/
         const resp = await fetch(`${API_BASE}/api/projects/`, {
           method: "POST",
           headers: {
@@ -58,17 +50,15 @@ document.addEventListener("DOMContentLoaded", async () => {
           const newProj = await resp.json();
           console.log("[projects.js] Новый проект =", newProj);
           createMsg.innerHTML = `<p class="success">Проект создан: ${newProj.title}</p>`;
-          // Очистим поля
-          document.getElementById("projectTitle").value       = "";
+          document.getElementById("projectTitle").value = "";
           document.getElementById("projectDescription").value = "";
-          document.getElementById("projectBudget").value      = "";
-          // Перезагрузим список
+          document.getElementById("projectBudget").value = "";
           await loadProjects(user);
         } else {
           const contentType = resp.headers.get("content-type") || "";
           if (contentType.includes("application/json")) {
             const errJson = await resp.json();
-            const errMsg  = errJson.detail || JSON.stringify(errJson);
+            const errMsg = errJson.detail || JSON.stringify(errJson);
             console.log("[projects.js] Ошибка POST /api/projects/ (JSON) =", errJson);
             createMsg.innerHTML = `<p class="error">${errMsg}</p>`;
           } else {
@@ -96,33 +86,24 @@ async function loadProjects(user) {
   const projectsListDiv = document.getElementById("projectsList");
   const projectsMessage = document.getElementById("projectsMessage");
   projectsListDiv.innerHTML = "";
-  projectsMessage.innerHTML  = "";
+  projectsMessage.innerHTML = "";
 
   try {
     console.log("[projects.js] Загрузка списка проектов…");
-    // Запрашиваем JSON: GET /api/projects/
-    const resp = await fetch(`${API_BASE}/api/projects/`);
+    const resp = await fetch(`${API_BASE}/api/projects/`, {
+      headers: {
+        "Authorization": `Bearer ${getToken()}`
+      }
+    });
     console.log("[projects.js] Ответ GET /api/projects/ статус =", resp.status);
     if (!resp.ok) {
       throw new Error("Не удалось получить список проектов");
     }
-    let projects = await resp.json();
+    const projects = await resp.json();
     console.log("[projects.js] Список проектов =", projects);
 
-    // Фильтрация: если роль = "employer", оставляем только проекты, где proj.employer_id === user.id
-    if (user.role === "employer") {
-      projects = projects.filter(proj => proj.employer_id === user.id);
-    }
-    // Если роль = "freelancer", можно показывать все “open” проекты (или вообще все):
-    else if (user.role === "freelancer") {
-      // Если нужно показывать только открытые:
-      // projects = projects.filter(proj => proj.status === "open");
-      // Иначе:
-      // (оставляем без изменений, чтобы фрилансер видел все проекты)
-    }
-
     if (projects.length === 0) {
-      projectsListDiv.innerHTML = `<p>Пока нет проектов${user.role === "employer" ? " от вас" : ""}.</p>`;
+      projectsListDiv.innerHTML = "<p>Пока нет проектов.</p>";
       return;
     }
 
@@ -139,15 +120,26 @@ async function loadProjects(user) {
 
       // Если роль = freelancer и проект открыт, добавляем кнопку «Подать заявку»
       if (user.role === "freelancer" && proj.status === "open") {
-        const btn = document.createElement("button");
-        btn.innerText = "Подать заявку";
-        btn.className = "btn-small";
-        btn.style.marginTop = "8px";
-        // При клике переходим на страницу деталей проекта:
-        btn.addEventListener("click", () => {
+        const applyBtn = document.createElement("button");
+        applyBtn.innerText = "Подать заявку";
+        applyBtn.className = "btn-small";
+        applyBtn.style.marginTop = "8px";
+        applyBtn.addEventListener("click", () => {
           window.location.href = `/projects/${proj.id}`;
         });
-        div.appendChild(btn);
+        div.appendChild(applyBtn);
+      }
+
+      // Если роль = employer и это его проект, добавляем кнопку «Смотреть заявки»
+      if (user.role === "employer" && proj.employer_id === user.id) {
+        const appsBtn = document.createElement("button");
+        appsBtn.innerText = "Смотреть заявки";
+        appsBtn.className = "btn-small";
+        appsBtn.style.marginLeft = "8px";
+        appsBtn.addEventListener("click", () => {
+          window.location.href = `/projects/${proj.id}/applications`;
+        });
+        div.appendChild(appsBtn);
       }
 
       projectsListDiv.appendChild(div);

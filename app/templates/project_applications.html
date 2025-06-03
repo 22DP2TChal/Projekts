@@ -1,0 +1,160 @@
+<!-- app/templates/project_applications.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Заявки по проекту — Freelance System</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
+  <style>
+    /* Сброс отступов и базовые настройки */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f2f2f5;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    /* Навигация */
+    nav {
+      max-width: 900px;
+      margin: 20px auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fff;
+      border-radius: 8px;
+      padding: 12px 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    nav a, nav button {
+      font-size: 1rem;
+      color: #007bff;
+      text-decoration: none;
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+    nav a:hover, nav button:hover {
+      text-decoration: underline;
+    }
+
+    /* Обёртка всего контента */
+    .applications-wrapper {
+      max-width: 900px;
+      margin: 20px auto 40px;
+      background: #fff;
+      border-radius: 8px;
+      padding: 24px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .applications-wrapper h2 {
+      margin-bottom: 16px;
+      color: #222;
+      font-size: 1.5rem;
+      border-bottom: 2px solid #e0e0e0;
+      padding-bottom: 8px;
+    }
+
+    /* Сообщения */
+    .message {
+      max-width: 900px;
+      margin: 12px auto;
+      font-size: 0.95rem;
+      padding: 10px 14px;
+      border-radius: 4px;
+      text-align: center;
+    }
+    .message.error {
+      background-color: #ffe3e3;
+      color: #a80000;
+      border: 1px solid #d00000;
+    }
+    .message.info {
+      background-color: #e3f2ff;
+      color: #005bb5;
+      border: 1px solid #80bfff;
+    }
+
+    /* Сетка для карточек заявок */
+    .cards-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    /* Стиль одной карточки */
+    .app-card {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .app-card-header {
+      background-color: #f9f9f9;
+      padding: 12px 16px;
+      border-bottom: 1px solid #e0e0e0;
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: #333;
+    }
+    .app-card-body {
+      flex: 1;
+      padding: 16px;
+    }
+    .app-card-body p {
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+    }
+    .app-card-body p span.label {
+      font-weight: 600;
+      color: #555;
+    }
+    .app-card-footer {
+      background-color: #fafafa;
+      padding: 12px 16px;
+      text-align: right;
+      font-size: 0.85rem;
+      color: #666;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    /* Мобильная адаптация: одна колонка на узких экранах */
+    @media (max-width: 600px) {
+      .cards-container {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="/projects">← Все проекты</a>
+    <button id="logoutBtn">Выйти</button>
+  </nav>
+
+  <div class="applications-wrapper">
+    <h2>Заявки по проекту №{{ project_id }}</h2>
+
+    <!-- Блок для сообщений (ошибка или “нет заявок”) -->
+    <div id="appsMessage" class="message info" style="display: none;"></div>
+
+    <!-- Контейнер для карточек -->
+    <div class="cards-container" id="cardsContainer">
+      <!-- JS вставит сюда карточки: <div class="app-card">…</div> -->
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', path='js/common.js') }}?v=1.0"></script>
+  <script src="{{ url_for('static', path='js/project_applications.js') }}?v=1.0"></script>
+</body>
+</html>

@@ -14,7 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       console.log("[register.js] Отправляем POST /users/ (регистрация) с:", { email, role });
-      const resp = await fetch(`${API_BASE}/users/`, {
+      const resp = await fetch(`${API_BASE}/api/users/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

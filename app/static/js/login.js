@@ -23,8 +23,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // Делаем fetch, окружим максимально подробным логированием
     let resp;
     try {
-      console.log("▶▶▶ [login.js] Перед fetch на URL:", `${API_BASE}/users/login`);
-      resp = await fetch(`${API_BASE}/users/login`, {
+      console.log("▶▶▶ [login.js] Перед fetch на URL:", `${API_BASE}/api/users/login`);
+      resp = await fetch(`${API_BASE}/api/users/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded"

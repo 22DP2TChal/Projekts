@@ -92,8 +92,8 @@
     <button id="logoutBtn" style="background:none; border:none; color:#007bff; cursor:pointer;">Выйти</button>
   </nav>
 
+  <!-- Карточка проекта -->
   <div class="project-card" id="projectCard">
-    <!-- Сюда `application.js` подставит реальные данные -->
     <div class="project-header" id="projectTitle">Загрузка…</div>
     <div class="project-body" id="projectDescription">Пожалуйста, подождите, загружаем данные проекта…</div>
     <div class="project-footer">
@@ -102,6 +102,7 @@
     </div>
   </div>
 
+  <!-- Форма подачи заявки -->
   <div class="application-form" id="applicationFormContainer">
     <h3>Подать заявку</h3>
     <div id="appMessage" class="message"></div>
@@ -116,6 +117,7 @@
     </form>
   </div>
 
+  <!-- Подключаем JS: -->
   <script src="{{ url_for('static', path='js/common.js') }}?v=1.0"></script>
   <script src="{{ url_for('static', path='js/application.js') }}?v=1.0"></script>
 </body>

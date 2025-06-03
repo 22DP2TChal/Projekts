@@ -30,6 +30,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (!userInfo) {
     // requireAuth уже перенаправит, если пользователь не авторизован
     return;
+
+  
   }
 
   // 2) Загружаем данные о проекте (через API)
@@ -61,7 +63,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   projectStatusEl.innerText = projectData.status;
 
   // Если проект не "open", скрываем форму и показываем сообщение
-  if (projectData.status !== "open") {
+ if (projectData.status !== "open") {
     applicationForm.style.display = "none";
     const msg = document.createElement("p");
     msg.className = "message";
@@ -69,7 +71,22 @@ document.addEventListener("DOMContentLoaded", async () => {
     appMessage.appendChild(msg);
     return;
   }
+   // 3.1) Кнопка «Смотреть заявки» (для работодателя)
+  if (userInfo.role === "employer" && userInfo.id === projectData.employer_id) {
+    const appsBtn = document.createElement("button");
+    appsBtn.innerText = "Смотреть заявки";
+    appsBtn.style.marginBottom = "16px";
+    appsBtn.addEventListener("click", () => {
+      window.location.href = `/projects/${projectId}/applications`;
+    });
+    const projectCard = document.getElementById("projectCard");
+    projectCard.insertAdjacentElement("beforebegin", appsBtn);
+  }
 
+
+ 
+
+ 
   // 4) Проверяем, подавал ли этот фрилансер уже заявку на этот проект
   try {
     const meResp = await fetch(

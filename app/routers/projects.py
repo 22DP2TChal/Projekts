@@ -1,13 +1,14 @@
 # app/routers/projects.py
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import desc   # <-- импортируем desc для сортировки
+from sqlalchemy import desc, func
+from typing import Literal, Optional, List
 
 # Импорты из пакета app
 from app.database import get_db
 from app.schemas import ProjectCreate, ProjectOut, ProjectUpdate
-from app.models import Project, User
+from app.models import Project, Application
 from app.utils import get_current_active_user, require_employer
 
 router = APIRouter()
@@ -17,7 +18,7 @@ router = APIRouter()
 def create_project(
     project_in: ProjectCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_employer),
+    current_user=Depends(require_employer),
 ):
     """
     Создание проекта (только employer).
@@ -28,7 +29,6 @@ def create_project(
         budget=project_in.budget,
         status=project_in.status,
         employer_id=current_user.id
-        # предположим, что в модели Project есть поле created_at с default=datetime.utcnow()
     )
     db.add(new_project)
     db.commit()
@@ -36,15 +36,30 @@ def create_project(
     return new_project
 
 
-@router.get("/", response_model=list[ProjectOut])
-def read_projects(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+@router.get("/", response_model=List[ProjectOut])
+def read_projects(
+    search: Optional[str] = Query(None, description="Поиск по заголовку, ILIKE"),
+    status: Optional[Literal["open", "in_progress", "closed"]] = Query(
+        None, description="Фильтрация по статусу"
+    ),
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+):
     """
-    Получить список проектов (публично), отсортированных по дате создания (сначала новые).
+    Получить список проектов (публично), с фильтрацией по заголовку и статусу.
+    Сортируются по created_at DESC.
     """
-    # Добавляем order_by(Project.created_at.desc())
+    query = db.query(Project)
+
+    if search:
+        query = query.filter(Project.title.ilike(f"%{search}%"))
+    if status:
+        query = query.filter(Project.status == status)
+
     projects_list = (
-        db.query(Project)
-        .order_by(desc(Project.created_at))  # сортируем по created_at DESC
+        query
+        .order_by(desc(Project.created_at))
         .offset(skip)
         .limit(limit)
         .all()
@@ -56,20 +71,20 @@ def read_projects(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
 def read_project(project_id: int, db: Session = Depends(get_db)):
     project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Project not found"
+        )
     return project
 
 
 @router.put("/{project_id}", response_model=ProjectOut)
 def update_project(
     project_id: int,
-    project_in: ProjectUpdate,
+    project_in: ProjectUpdate,  # <-- здесь используется исправленный ProjectUpdate
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user=Depends(get_current_active_user)
 ):
-    """
-    Обновление проекта (только владелец или admin).
-    """
     project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
@@ -77,6 +92,7 @@ def update_project(
     if project.employer_id != current_user.id and current_user.role != "admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
 
+    # Обновляем только те поля, которые не None
     if project_in.title is not None:
         project.title = project_in.title
     if project_in.description is not None:
@@ -90,23 +106,69 @@ def update_project(
     db.refresh(project)
     return project
 
-
 @router.delete("/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_project(
     project_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user=Depends(get_current_active_user),
 ):
     """
     Удаление проекта (только владелец или admin).
     """
     project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Project not found"
+        )
 
     if project.employer_id != current_user.id and current_user.role != "admin":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, 
+            detail="Not authorized"
+        )
 
     db.delete(project)
     db.commit()
     return
+
+
+@router.get("/{project_id}/stats", status_code=status.HTTP_200_OK)
+def project_statistics(
+    project_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_active_user),
+):
+    """
+    Статистика по проекту:
+      - count: число заявок,
+      - avg_price: средняя предложенная цена среди всех заявок на этот проект.
+    Доступен только для владельца проекта или admin.
+    """
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Project not found"
+        )
+
+    if project.employer_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, 
+            detail="Not authorized"
+        )
+
+    # Агрегируем данные из таблицы Application
+    stats = (
+        db.query(
+            func.count(Application.id).label("application_count"),
+            func.avg(Application.proposed_price).label("avg_price")
+        )
+        .filter(Application.project_id == project_id)
+        .first()
+    )
+    return {
+        "project_id": project_id,
+        "application_count": stats.application_count or 0,
+        "avg_price": float(stats.avg_price or 0.0),
+    }

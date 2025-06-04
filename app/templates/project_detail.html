@@ -5,71 +5,36 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Детали проекта — Freelance System</title>
-  <!-- Подключаем внешний CSS -->
   <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
 </head>
 <body>
-  <!-- Навигационная панель -->
   <nav>
     <div class="nav-left">
       <a href="/projects" class="logo">← Все проекты</a>
     </div>
     <div class="nav-right">
-      <button id="logoutBtn">Выйти</button>
+      <button id="logoutBtn" style="display: none;">Выйти</button>
     </div>
   </nav>
 
   <div class="container">
-    <!-- Заголовок страницы -->
     <h2 class="detail-header">Детали проекта</h2>
 
-    <!-- Карточка с данными проекта -->
     <div class="card project-detail-card" id="projectCard">
       <div class="card-header" id="projectTitle">Загрузка…</div>
       <div class="card-body">
-        <p id="projectDescription">Пожалуйста, подождите, загружаем данные проекта…</p>
+        <p id="projectDescription">Пожалуйста, подождите...</p>
       </div>
       <div class="card-footer">
         <span class="status">Статус: <strong id="projectStatus">—</strong></span>
-        <span><strong>Бюджет:</strong> ₽<span id="projectBudget">—</span></span>
+        <span>Бюджет: ₽<span id="projectBudget">—</span></span>
       </div>
     </div>
 
-    <!-- Форма подачи/редактирования заявки (для фрилансера) -->
-    <div class="application-form" id="applicationForm">
-      <h3>Подать заявку</h3>
-      <div id="appMessage" class="message"></div>
-      <form id="applicationFormElement">
-        <div class="form-group">
-          <label for="proposalText">Ваше предложение</label>
-          <textarea
-            id="proposalText"
-            rows="4"
-            placeholder="Опишите своё видение задачи…"
-            required
-          ></textarea>
-        </div>
-
-        <div class="form-group">
-          <label for="proposalPrice">Ваша цена (₽)</label>
-          <input
-            type="number"
-            id="proposalPrice"
-            step="0.01"
-            min="0.01"
-            placeholder="Например, 100.00"
-            required
-          />
-        </div>
-
-        <button type="submit" class="primary-btn" id="submitAppBtn">
-          Отправить заявку
-        </button>
-      </form>
-    </div>
+    <!-- Блок, куда будем вставлять форму подачи заявки (если это фрилансер) -->
+    <div id="applicationWrapper" style="margin-top: 24px;"></div>
   </div>
 
-  <!-- Подключаем JS -->
   <script src="{{ url_for('static', path='js/common.js') }}"></script>
   <script src="{{ url_for('static', path='js/application.js') }}"></script>
 </body>

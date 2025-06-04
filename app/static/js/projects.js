@@ -1,180 +1,227 @@
 // app/static/js/projects.js
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const navWelcome       = document.getElementById("navWelcome");
-  const navLogoutBtn     = document.getElementById("navLogoutBtn");
-  const projectsListDiv  = document.getElementById("projectsList");
-  const projectsMessage  = document.getElementById("projectsMessage");
-  const createWrapper    = document.getElementById("createProjectWrapper");
-  const createForm       = document.getElementById("createProjectForm");
-  const createMsg        = document.getElementById("createProjectMessage");
-
-  // 1) Проверяем токен и получаем пользователя
-  const user = await requireAuth();
-  if (!user) return;  // requireAuth() сам сделает редирект, если токен невалидный
-
-  navLogoutBtn.addEventListener("click", logout);
-
-  // Признак того, что фронт может стилизовать в зависимости от роли
-  document.body.classList.add(user.role);
-
-  // 2) Загружаем и отрисовываем список проектов
-  await loadProjects(user);
-
-  // 3) Если роль = employer, показываем форму создания проекта
-  if (user.role === "employer") {
-    createWrapper.classList.remove("hidden");
-    createForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      createMsg.innerHTML = "";
-
-      const title       = document.getElementById("projectTitle").value.trim();
-      const description = document.getElementById("projectDescription").value.trim();
-      const budget      = parseFloat(document.getElementById("projectBudget").value);
-
-      try {
-        const token = getToken();
-        if (!token) throw new Error("Неавторизованный");
-
-        const resp = await fetch(`${API_BASE}/api/projects/`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-          },
-          body: JSON.stringify({ title, description, budget, status: "open" })
-        });
-        if (resp.ok) {
-          const newProj = await resp.json();
-          createMsg.innerHTML = `<p class="message success">Проект создан: ${newProj.title}</p>`;
-          // Очищаем поля
-          document.getElementById("projectTitle").value       = "";
-          document.getElementById("projectDescription").value = "";
-          document.getElementById("projectBudget").value      = "";
-          // Перерисуем список
-          await loadProjects(user);
-        } else {
-          const contentType = resp.headers.get("content-type") || "";
-          if (contentType.includes("application/json")) {
-            const errJson = await resp.json();
-            const errMsg = errJson.detail || JSON.stringify(errJson);
-            createMsg.innerHTML = `<p class="message error">${errMsg}</p>`;
-          } else {
-            const text = await resp.text();
-            const short = text.length > 200 ? text.slice(0, 200) + "…" : text;
-            createMsg.innerHTML = `<p class="message error">Server error: ${short}</p>`;
-          }
-        }
-      } catch (err) {
-        createMsg.innerHTML = `<p class="message error">${err.message}</p>`;
-      }
-    });
-  } else {
-    createWrapper.classList.add("hidden");
-  }
-});
-
-
-/**
- * Загрузка списка проектов и отрисовка в #projectsList.
- * Для каждого проекта, если роль === "freelancer", проверяем,
- * подавал ли уже текущий пользователь заявку, и деактивируем кнопку.
- */
-async function loadProjects(user) {
+  const navWelcome      = document.getElementById("navWelcome");
+  const navLogoutBtn    = document.getElementById("navLogoutBtn");
   const projectsListDiv = document.getElementById("projectsList");
   const projectsMessage = document.getElementById("projectsMessage");
-  projectsListDiv.innerHTML = "";
-  projectsMessage.innerHTML = "";
 
+  const searchInput     = document.getElementById("searchInput");
+  const statusFilter    = document.getElementById("statusFilter");
+
+  let user = null;
   try {
-    const resp = await fetch(`${API_BASE}/api/projects/`, {
-      headers: { "Authorization": `Bearer ${getToken()}` }
-    });
-    if (!resp.ok) {
-      throw new Error("Не удалось получить список проектов");
-    }
+    user = await requireAuth();
+  } catch {
+    // Гость может видеть список проектов без авторизации
+  }
 
-    let projects = await resp.json();
+  if (user) {
+    navWelcome.innerText = `Добро пожаловать, ${user.email}`;
+    navLogoutBtn.style.display = "inline";
+    navLogoutBtn.addEventListener("click", logout);
+  }
 
-    if (projects.length === 0) {
-      projectsListDiv.innerHTML = "<p>Пока нет проектов.</p>";
-      return;
-    }
+  // Начальная загрузка проектов
+  await loadProjects(user, "", "");
 
-    // Если роль = "employer" – показываем только свои проекты (по желанию),
-    // но сохраняем сортировку уже по времени (бэкенд должен вернуть их отсортированными):
-    if (user.role === "employer") {
-      projects = projects.filter(proj => proj.employer_id === user.id);
-    }
+  // Дебаунс-функция для автоматического поиска/фильтрации
+  let debounceTimer;
+  function debounceLoad() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(async () => {
+      const searchValue = searchInput.value.trim();
+      const statusValue = statusFilter.value;
+      await loadProjects(user, searchValue, statusValue);
+    }, 300);
+  }
 
-    // -----------------------------------------
-    // Основная идея: для каждого проекта, если роль=freelancer,
-    // делаем запрос GET /api/applications/projects/{id}/applications/me,
-    // чтобы узнать, есть ли у нас уже «своя» заявка на этот проект.
-    // -----------------------------------------
-    for (const proj of projects) {
-      const card = document.createElement("div");
-      card.className = "card";
+  searchInput.addEventListener("input", debounceLoad);
+  statusFilter.addEventListener("change", debounceLoad);
 
-      // Основной HTML-карточки (тело + футер)
-      card.innerHTML = `
-        <div class="card-header">${proj.title}</div>
-        <div class="card-body">
-          <p>${ proj.description || "<em>Без описания</em>" }</p>
-          <p><strong>Бюджет:</strong> ₽${ proj.budget.toFixed(2) }</p>
-        </div>
-        <div class="card-footer">
-          <span class="status">Статус: ${proj.status}</span>
-          <div class="card-buttons"></div>
-        </div>
-      `;
+  // Основная функция загрузки и отрисовки списка проектов
+  async function loadProjects(user, searchValue, statusValue) {
+    projectsListDiv.innerHTML = "";
+    projectsMessage.innerHTML = "";
+    projectsMessage.style.display = "none";
 
-      const buttonsContainer = card.querySelector(".card-buttons");
+    try {
+      let url = `${API_BASE}/api/projects?skip=0&limit=100`;
+      if (searchValue) {
+        url += `&search=${encodeURIComponent(searchValue)}`;
+      }
+      if (statusValue) {
+        url += `&status=${encodeURIComponent(statusValue)}`;
+      }
 
-      // 1) Если фрилансер и проект открыт – по умолчанию добавляем кнопку
-      if (user.role === "freelancer" && proj.status === "open") {
-        // Сначала создаём кнопку, но НЕ добавляем её сразу:
-        const applyBtn = document.createElement("button");
-        applyBtn.className = "primary-btn";
-        applyBtn.innerText = "Подать заявку";
-        // Клик переводит на страницу деталей проекта:
-        applyBtn.addEventListener("click", () => {
-          window.location.href = `/projects/${proj.id}`;
-        });
+      const resp = await fetch(url, {
+        headers: user ? { "Authorization": `Bearer ${getToken()}` } : {},
+      });
 
-        // Проверяем, подавал ли текущий фрилансер заявку на этот проект:
-        try {
-          const checkResp = await fetch(
-            `${API_BASE}/api/applications/projects/${proj.id}/applications/me`,
-            { headers: { "Authorization": `Bearer ${getToken()}` } }
-          );
-          if (checkResp.status === 200) {
-            // У фрилансера уже есть заявка → делаем кнопку неактивной
-            applyBtn.innerText = "Заявка отправлена";
-            // (CSS: button.primary-btn:disabled уже окрашивает её в серый)
+      if (!resp.ok) {
+        throw new Error(`HTTP ${resp.status}`);
+      }
+
+      let projects = await resp.json();
+
+      if (!projects || projects.length === 0) {
+        projectsListDiv.innerHTML = "<p>Проектов не найдено.</p>";
+        return;
+      }
+
+      // Если работодатель, показываем только свои проекты
+      if (user && user.role === "employer") {
+        projects = projects.filter(proj => proj.employer_id === user.id);
+      }
+
+      for (const proj of projects) {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <div class="card-header">${proj.title}</div>
+          <div class="card-body">
+            <p>${ proj.description || "<em>Без описания</em>" }</p>
+            <p><strong>Бюджет:</strong> ₽${ proj.budget.toFixed(2) }</p>
+          </div>
+          <div class="card-footer">
+            <span class="status">Статус: ${proj.status}</span>
+            <div class="card-buttons"></div>
+          </div>
+        `;
+
+        const buttonsContainer = card.querySelector(".card-buttons");
+
+        // Если фрилансер и проект открыт — «Подать/Редактировать заявку»
+        if (user && user.role === "freelancer" && proj.status === "open") {
+          let hasApplied = false;
+          try {
+            const checkResp = await fetch(
+              `${API_BASE}/api/applications/projects/${proj.id}/applications/me`,
+              { headers: { "Authorization": `Bearer ${getToken()}` } }
+            );
+            if (checkResp.ok) hasApplied = true;
+          } catch {
+            hasApplied = false;
           }
-        } catch (err) {
-          // Если любая сетевая или неожиданная ошибка – просто оставляем кнопку активной
+
+          const actionBtn = document.createElement("button");
+          actionBtn.className = "primary-btn";
+          actionBtn.innerText = hasApplied ? "Редактировать заявку" : "Подать заявку";
+          actionBtn.addEventListener("click", () => {
+            window.location.href = `/projects/${proj.id}`;
+          });
+          buttonsContainer.appendChild(actionBtn);
         }
 
-        buttonsContainer.appendChild(applyBtn);
+        // Гость — просто «Смотреть» (если проект открыт)
+        if (!user || (user.role !== "employer" && user.role !== "freelancer")) {
+          if (proj.status === "open") {
+            const viewBtn = document.createElement("button");
+            viewBtn.className = "primary-btn";
+            viewBtn.innerText = "Смотреть";
+            viewBtn.addEventListener("click", () => {
+              window.location.href = `/projects/${proj.id}`;
+            });
+            buttonsContainer.appendChild(viewBtn);
+          }
+        }
+
+        // Если работодатель — «Смотреть заявки», «Статистика» и селект для смены статуса
+        if (user && user.role === "employer" && proj.employer_id === user.id) {
+          // 1) Кнопка «Смотреть заявки»
+          const viewAppsBtn = document.createElement("button");
+          viewAppsBtn.className = "primary-btn";
+          viewAppsBtn.innerText = "Смотреть заявки";
+          viewAppsBtn.addEventListener("click", () => {
+            window.location.href = `/projects/${proj.id}/applications`;
+          });
+          buttonsContainer.appendChild(viewAppsBtn);
+
+          // 2) Кнопка «Статистика»
+          const statsBtn = document.createElement("button");
+          statsBtn.className = "primary-btn";
+          statsBtn.style.marginLeft = "8px";
+          statsBtn.innerText = "Статистика";
+          statsBtn.addEventListener("click", async () => {
+            try {
+              const statsResp = await fetch(
+                `${API_BASE}/api/projects/${proj.id}/stats`,
+                { headers: { "Authorization": `Bearer ${getToken()}` } }
+              );
+              if (!statsResp.ok) throw new Error(`HTTP ${statsResp.status}`);
+              const statsData = await statsResp.json();
+              alert(
+                `Проект "${proj.title}"\n` +
+                `– Всего заявок: ${statsData.application_count}\n` +
+                `– Средняя цена: ₽${statsData.avg_price.toFixed(2)}`
+              );
+            } catch (e) {
+              alert(`Не удалось получить статистику: ${e.message}`);
+            }
+          });
+          buttonsContainer.appendChild(statsBtn);
+
+          // 3) Селект для смены статуса проекта
+          const statusSelect = document.createElement("select");
+          statusSelect.style.marginLeft = "8px";
+
+          const statuses = [
+            { value: "open",        label: "Открыт" },
+            { value: "in_progress", label: "В работе" },
+            { value: "closed",      label: "Закрыт" }
+          ];
+
+          statuses.forEach(({ value, label }) => {
+            const opt = document.createElement("option");
+            opt.value = value;
+            opt.innerText = label;
+            if (proj.status === value) opt.selected = true;
+            statusSelect.appendChild(opt);
+          });
+
+          statusSelect.addEventListener("change", async () => {
+            const newStatus = statusSelect.value;
+            const body = { status: newStatus };
+
+            try {
+              const resp = await fetch(`${API_BASE}/api/projects/${proj.id}`, {
+                method: "PUT",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${getToken()}`
+                },
+                body: JSON.stringify(body)
+              });
+
+              if (resp.ok) {
+                const statusSpan = card.querySelector(".status");
+                statusSpan.innerHTML = `Статус: ${newStatus}`;
+              } else {
+                let errMsg = `HTTP ${resp.status}`;
+                const contentType = resp.headers.get("content-type") || "";
+                if (contentType.includes("application/json")) {
+                  const errJson = await resp.json();
+                  errMsg = JSON.stringify(errJson, null, 2);
+                }
+                alert(`Не удалось изменить статус:\n${errMsg}`);
+                statusSelect.value = proj.status;
+              }
+            } catch (err) {
+              alert(`Сетевая ошибка при изменении статуса: ${err.message}`);
+              statusSelect.value = proj.status;
+            }
+          });
+
+          buttonsContainer.appendChild(statusSelect);
+        }
+
+        projectsListDiv.appendChild(card);
       }
 
-      // 2) Если работодатель и это его проект – добавляем «Смотреть заявки»
-      if (user.role === "employer" && proj.employer_id === user.id) {
-        const viewAppsBtn = document.createElement("button");
-        viewAppsBtn.className = "primary-btn";
-        viewAppsBtn.innerText = "Смотреть заявки";
-        viewAppsBtn.addEventListener("click", () => {
-          window.location.href = `/projects/${proj.id}/applications`;
-        });
-        buttonsContainer.appendChild(viewAppsBtn);
-      }
-
-      projectsListDiv.appendChild(card);
+    } catch (err) {
+      projectsMessage.classList.add("error");
+      projectsMessage.innerText = `Ошибка при загрузке проектов: ${err.message}`;
+      projectsMessage.style.display = "block";
     }
-
-  } catch (err) {
-    projectsMessage.innerHTML = `<p class="message error">${err.message}</p>`;
   }
-}
+});

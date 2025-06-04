@@ -131,7 +131,6 @@ nav .nav-right button:hover {
   box-shadow: var(--shadow-medium);
   transform: translateY(-2px);
 }
-
 .card + .card {
   margin-top: 12px;
 }
@@ -186,28 +185,68 @@ nav .nav-right button:hover {
   gap: 20px;
 }
 
-/* Когда у контейнера есть класс "employer" — заставляем всего одну колонку */
+/* Когда у контейнера есть класс "employer" — одна колонка */
 .projects-grid.employer {
   grid-template-columns: 1fr !important;
 }
 
-
-
-/* ──────────────────────────────────────────────────────────
-   Для фрилансера: одна колонка во весь контейнер
-────────────────────────────────────────────────────────── */
+/* Для фрилансера: одна колонка во весь контейнер */
 body.freelancer .projects-grid {
   grid-template-columns: 1fr !important;
 }
 
 /* ──────────────────────────────────────────────────────────
-   Сетка для карточек заявок (applications)
+   Сетка для карточек заявок (applications и apps)
 ────────────────────────────────────────────────────────── */
-.applications-grid {
+/* С учетом того, что HTML использует класс apps-grid, дублируем правила */
+.applications-grid,
+.apps-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
   gap: 20px;
   margin-top: 16px;
+}
+
+/* ──────────────────────────────────────────────────────────
+   Карточка заявки (app-card)
+────────────────────────────────────────────────────────── */
+.app-card {
+  background: var(--color-card-bg);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-light);
+  margin-bottom: 20px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.app-card:hover {
+  box-shadow: var(--shadow-medium);
+  transform: translateY(-2px);
+}
+.app-card + .app-card {
+  margin-top: 12px;
+}
+.app-card-header {
+  background-color: var(--color-accent);
+  color: #fff;
+  font-family: var(--font-heading);
+  padding: 12px 16px;
+  font-size: 1rem;
+}
+.app-card-body {
+  padding: 16px;
+}
+.app-card-body p {
+  margin-bottom: 8px;
+  color: var(--color-subtext);
+}
+.app-card-footer {
+  padding: 12px 16px;
+  background-color: #fafafa;
+  border-top: 1px solid var(--color-border);
+  font-size: 0.9rem;
+  color: var(--color-subtext);
 }
 
 /* ──────────────────────────────────────────────────────────
@@ -362,10 +401,41 @@ button.primary-btn:disabled {
 }
 
 /* ──────────────────────────────────────────────────────────
+   «Поиск и фильтр» в списке проектов
+────────────────────────────────────────────────────────── */
+.search-filter {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  align-items: center;
+}
+.search-filter input,
+.search-filter select {
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  font-size: 1rem;
+  background: #fafafa;
+}
+.search-filter button {
+  padding: 8px 16px;
+  background-color: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-button);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.search-filter button:hover {
+  background-color: var(--color-primary-hover);
+}
+
+/* ──────────────────────────────────────────────────────────
    Адаптив: на очень узких экранах все карточки в один столбец
 ────────────────────────────────────────────────────────── */
 @media (max-width: 600px) {
-  .applications-grid {
+  .applications-grid,
+  .apps-grid {
     grid-template-columns: 1fr;
   }
   .projects-grid {

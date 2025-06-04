@@ -1,33 +1,29 @@
+<!-- app/templates/project_applications.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Заявки по проекту №{{ project_id }} — Freelance System</title>
-
-  <!-- Подключаем общий CSS -->
+  <title>Заявки по проекту — Freelance System</title>
   <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
-  <!-- Подключаем стили для карточек заявок -->
-  <link rel="stylesheet" href="{{ url_for('static', path='css/applications.css') }}">
 </head>
 <body>
-  <!-- Навигационная панель -->
-  <nav class="nav-apps">
-    <a href="/projects" class="nav-back">← Все проекты</a>
-    <button id="logoutBtn" class="nav-logout">Выйти</button>
+  <nav>
+    <a href="/projects">← Все проекты</a>
+    <button id="logoutBtn">Выйти</button>
   </nav>
 
-  <div class="container">
-    <h2 class="apps-header">Заявки по проекту №{{ project_id }}</h2>
-
-    <!-- Блок для сообщений об ошибке или отсутствии заявок -->
+  <div class="applications-wrapper">
+    <h2>Заявки по проекту №{{ project_id }}</h2>
     <div id="appsMessage" class="message"></div>
 
-    <!-- Контейнер Grid для карточек заявок -->
+    <!-- Новый контейнер карточек -->
     <div id="appsGrid" class="apps-grid"></div>
   </div>
 
   <script src="{{ url_for('static', path='js/common.js') }}?v=1.0"></script>
   <script src="{{ url_for('static', path='js/project_applications.js') }}?v=1.0"></script>
+  <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
+
 </body>
 </html>

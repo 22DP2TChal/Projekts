@@ -28,7 +28,7 @@
 }
 
 /* ──────────────────────────────────────────────────────────
-   Базовые стили
+   Сброс отступов и базовая типографика
 ────────────────────────────────────────────────────────── */
 * {
   box-sizing: border-box;
@@ -44,17 +44,19 @@ html, body {
   line-height: 1.6;
 }
 
+/* ──────────────────────────────────────────────────────────
+   Ссылки и текст
+────────────────────────────────────────────────────────── */
 a {
   color: var(--color-primary);
   text-decoration: none;
 }
-
 a:hover {
   text-decoration: underline;
 }
 
 /* ──────────────────────────────────────────────────────────
-   Контейнер для центровки главной области
+   Контейнер для центровки главного контента
 ────────────────────────────────────────────────────────── */
 .container {
   max-width: 900px;
@@ -76,7 +78,8 @@ nav {
   margin-bottom: 24px;
 }
 
-nav .nav-left {
+nav .nav-left,
+nav .nav-right {
   display: flex;
   align-items: center;
 }
@@ -96,13 +99,23 @@ nav .nav-right button {
   font-size: 1rem;
   padding: 4px 8px;
 }
-
 nav .nav-right button:hover {
   color: var(--color-primary-hover);
 }
 
 /* ──────────────────────────────────────────────────────────
-   Карточки (Projects и Applications)
+   Заголовки разделов
+────────────────────────────────────────────────────────── */
+.projects-header,
+.detail-header {
+  margin-bottom: 20px;
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  color: var(--color-text);
+}
+
+/* ──────────────────────────────────────────────────────────
+   Карточки: общие стили для .card
 ────────────────────────────────────────────────────────── */
 .card {
   background: var(--color-card-bg);
@@ -110,30 +123,46 @@ nav .nav-right button:hover {
   box-shadow: var(--shadow-light);
   margin-bottom: 20px;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.card:hover {
+  box-shadow: var(--shadow-medium);
+  transform: translateY(-2px);
 }
 
 .card + .card {
   margin-top: 12px;
 }
 
-.card-header {
-  padding: 16px;
+/* ──────────────────────────────────────────────────────────
+   Карточка проекта (project-card / project-detail-card)
+────────────────────────────────────────────────────────── */
+.project-card,
+.project-detail-card {
+  max-width: 700px;
+  margin: 0 auto 24px;
+}
+.project-card .project-header,
+.project-detail-card .card-header {
   background-color: var(--color-accent);
   color: #fff;
   font-family: var(--font-heading);
   font-size: 1.25rem;
-}
-
-.card-body {
   padding: 16px;
 }
-
-.card-body p {
+.project-card .project-body,
+.project-detail-card .card-body {
+  padding: 16px;
+}
+.project-card .project-body p,
+.project-detail-card .card-body p {
   margin-bottom: 8px;
   color: var(--color-subtext);
 }
-
-.card-footer {
+.project-card .project-footer,
+.project-detail-card .card-footer {
   padding: 12px 16px;
   background-color: #fafafa;
   border-top: 1px solid var(--color-border);
@@ -141,23 +170,38 @@ nav .nav-right button:hover {
   justify-content: space-between;
   align-items: center;
 }
-
-.card-footer .status {
+.project-card .project-footer .status,
+.project-detail-card .card-footer .status {
   font-size: 0.9rem;
   color: var(--color-subtext);
 }
 
 /* ──────────────────────────────────────────────────────────
-   Сетка для карточек проектов на странице списка
+   Сетка для карточек проектов (список проектов)
 ────────────────────────────────────────────────────────── */
+/* Сетка карточек проектов: несколько колонок */
 .projects-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 20px;
 }
 
+/* Когда у контейнера есть класс "employer" — заставляем всего одну колонку */
+.projects-grid.employer {
+  grid-template-columns: 1fr !important;
+}
+
+
+
 /* ──────────────────────────────────────────────────────────
-   Карточки для заявок (две колонки на десктопе, одна — на мобильном)
+   Для фрилансера: одна колонка во весь контейнер
+────────────────────────────────────────────────────────── */
+body.freelancer .projects-grid {
+  grid-template-columns: 1fr !important;
+}
+
+/* ──────────────────────────────────────────────────────────
+   Сетка для карточек заявок (applications)
 ────────────────────────────────────────────────────────── */
 .applications-grid {
   display: grid;
@@ -167,7 +211,66 @@ nav .nav-right button:hover {
 }
 
 /* ──────────────────────────────────────────────────────────
-   Форма (inputs, textarea, кнопки)
+   Форма подачи/редактирования заявки (application-form)
+────────────────────────────────────────────────────────── */
+.application-form {
+  max-width: 700px;
+  margin: 0 auto 40px;
+  background-color: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: 24px;
+  box-shadow: var(--shadow-light);
+}
+.application-form h3 {
+  margin-bottom: 16px;
+  font-family: var(--font-heading);
+  color: var(--color-text);
+}
+.application-form label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: var(--color-subtext);
+}
+.application-form textarea,
+.application-form input[type="number"] {
+  width: 100%;
+  padding: 8px 10px;
+  margin-bottom: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  font-size: 1rem;
+  color: var(--color-text);
+  background: #fafafa;
+  transition: border-color 0.2s ease;
+}
+.application-form textarea:focus,
+.application-form input[type="number"]:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  background: #fff;
+}
+.application-form button {
+  padding: 10px 24px;
+  background-color: var(--color-primary);
+  border: none;
+  border-radius: var(--radius-button);
+  font-size: 1rem;
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.application-form button:hover {
+  background-color: var(--color-primary-hover);
+}
+.application-form button:disabled {
+  background-color: #a0c4ff;
+  cursor: not-allowed;
+}
+
+/* ──────────────────────────────────────────────────────────
+   Форма создания проекта (form-wrapper)
 ────────────────────────────────────────────────────────── */
 .form-wrapper {
   background: var(--color-card-bg);
@@ -176,24 +279,20 @@ nav .nav-right button:hover {
   box-shadow: var(--shadow-light);
   margin-bottom: 24px;
 }
-
 .form-wrapper h3 {
   margin-bottom: 16px;
   font-family: var(--font-heading);
   color: var(--color-text);
 }
-
 .form-group {
   margin-bottom: 16px;
 }
-
 .form-group label {
   display: block;
   margin-bottom: 6px;
   font-weight: 600;
   color: var(--color-subtext);
 }
-
 .form-group input,
 .form-group textarea,
 .form-group select {
@@ -205,19 +304,16 @@ nav .nav-right button:hover {
   color: var(--color-text);
   background: #fafafa;
 }
-
 .form-group input:focus,
 .form-group textarea:focus {
   outline: none;
   border-color: var(--color-primary);
   background: #fff;
 }
-
 .form-group textarea {
   resize: vertical;
   min-height: 80px;
 }
-
 button.primary-btn {
   background-color: var(--color-primary);
   color: #fff;
@@ -228,18 +324,16 @@ button.primary-btn {
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
-
 button.primary-btn:hover {
   background-color: var(--color-primary-hover);
 }
-
 button.primary-btn:disabled {
   background-color: #a0c4ff;
   cursor: not-allowed;
 }
 
 /* ──────────────────────────────────────────────────────────
-   Сообщения (ошибки / успех)
+   Сообщения об ошибках / успехе (message)
 ────────────────────────────────────────────────────────── */
 .message {
   padding: 14px 18px;
@@ -247,13 +341,11 @@ button.primary-btn:disabled {
   border-radius: var(--radius-button);
   font-size: 0.95rem;
 }
-
 .message.error {
   background-color: var(--color-error-bg);
   color: var(--color-error-text);
   border: 1px solid #d00000;
 }
-
 .message.success {
   background-color: var(--color-success-bg);
   color: var(--color-success-text);
@@ -261,7 +353,16 @@ button.primary-btn:disabled {
 }
 
 /* ──────────────────────────────────────────────────────────
-   Адаптивность: на очень узких экранах делаем все карточки в один столбец
+   Дополнительные .message (info) для приложений (описание)
+────────────────────────────────────────────────────────── */
+.message.info {
+  background-color: #e8f0fe;
+  color: #1a73e8;
+  border: 1px solid #c6dafc;
+}
+
+/* ──────────────────────────────────────────────────────────
+   Адаптив: на очень узких экранах все карточки в один столбец
 ────────────────────────────────────────────────────────── */
 @media (max-width: 600px) {
   .applications-grid {
@@ -269,154 +370,6 @@ button.primary-btn:disabled {
   }
   .projects-grid {
     grid-template-columns: 1fr;
-  }
-}
-
-/* app/static/css/style.css */
-
-.message {
-  padding: 12px;
-  border-radius: 4px;
-  font-size: 0.95rem;
-  margin-bottom: 16px;
-}
-
-/* Ошибки — красный фон и текст */
-.message.error {
-  background-color: #ffe3e3;
-  color: #a80000;
-  border: 1px solid #d00000;
-}
-
-/* Успех — зелёный фон и текст */
-.message.success {
-  background-color: #e3f9e5;
-  color: #226622;
-  border: 1px solid #059a21;
-}
-
-/* ====== Общие стили ====== */
-body {
-  font-family: "Helvetica Neue", Arial, sans-serif;
-  background-color: #f8f9fa;
-  color: #333;
-  margin: 0;
-  padding: 0;
-}
-
-/* ====== Навигация ====== */
-nav {
-  max-width: 900px;
-  margin: 20px auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 16px;
-}
-nav a {
-  color: #007bff;
-  font-size: 1rem;
-  text-decoration: none;
-}
-nav button {
-  background: none;
-  border: none;
-  color: #007bff;
-  font-size: 1rem;
-  cursor: pointer;
-}
-
-/* ====== Обёртка и заголовок ====== */
-.applications-wrapper {
-  max-width: 900px;
-  margin: 20px auto;
-  padding: 0 16px;
-}
-.applications-wrapper h2 {
-  font-size: 1.75rem;
-  color: #2c3e50;
-  margin-bottom: 12px;
-}
-
-/* ====== Сообщения ====== */
-.message {
-  font-size: 1rem;
-  margin-bottom: 16px;
-  display: none;
-}
-.message.info {
-  color: #05668d;
-}
-.message.error {
-  color: #d00000;
-}
-
-/* ====== Сетка карточек заявок ====== */
-.apps-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
-  margin-top: 16px;
-}
-
-/* ====== Одиночная карточка заявки ====== */
-.app-card {
-  background-color: #ffffff;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-  display: flex;
-  flex-direction: column;
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
-}
-.app-card:hover {
-  box-shadow: 0 4px 8px rgba(0,0,0,0.12);
-  transform: translateY(-2px);
-}
-
-/* Заголовок карточки */
-.app-card-header {
-  background-color: #f0f4f8;
-  padding: 12px 16px;
-  border-bottom: 1px solid #dfe3e8;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #2c3e50;
-  border-top-left-radius: 8px;
-  border-top-right-radius: 8px;
-}
-
-/* Тело карточки */
-.app-card-body {
-  padding: 12px 16px;
-  flex-grow: 1;
-}
-.app-card-body p {
-  margin: 8px 0;
-  font-size: 0.95rem;
-  color: #4f4f4f;
-  line-height: 1.4;
-}
-.app-card-body .label {
-  font-weight: 500;
-  color: #34495e;
-}
-
-/* Футер карточки */
-.app-card-footer {
-  background-color: #f9fafb;
-  padding: 10px 16px;
-  border-top: 1px solid #dfe3e8;
-  font-size: 0.85rem;
-  color: #6c757d;
-  border-bottom-left-radius: 8px;
-  border-bottom-right-radius: 8px;
-}
-
-/* ====== Адаптив ====== */
-@media (max-width: 600px) {
-  .applications-wrapper h2 {
-    font-size: 1.5rem;
   }
   .app-card-header {
     font-size: 0.95rem;

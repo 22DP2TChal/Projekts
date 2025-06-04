@@ -62,7 +62,9 @@ class ApplicationCreate(ApplicationBase):
     pass
 
 class ApplicationUpdate(BaseModel):
-    status: str = Field(pattern="^(pending|accepted|rejected)$")
+    proposal_text: Optional[str] = None
+    proposed_price: Optional[float] = None
+    status: Optional[str] = None
 
 class ApplicationOut(ApplicationBase):
     id: int

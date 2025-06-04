@@ -1,43 +1,42 @@
 // app/static/js/application.js
 
 /**
- * Для этого скрипта предполагается:
- * 1) URL страницы имеет формат http://127.0.0.1:8000/projects/{project_id}
- * 2) common.js уже подключён и определяет API_BASE, saveToken(), getToken(), requireAuth(), logout()
+ * Предполагается, что:
+ * 1) URL страницы = http://…/projects/{project_id}
+ * 2) common.js уже подключён и определяет API_BASE, getToken(), requireAuth(), logout()
  */
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // Получаем project_id из URL: например, /projects/123
+  // 1) Разбор projectId из URL
   const pathParts = window.location.pathname.split("/");
-  const projectId = pathParts[pathParts.length - 1] || pathParts[pathParts.length - 2];
+  const projectId = parseInt(pathParts[pathParts.length - 1] 
+                      || pathParts[pathParts.length - 2]);
 
-  const projectTitleEl = document.getElementById("projectTitle");
-  const projectDescEl = document.getElementById("projectDescription");
-  const projectBudgetEl = document.getElementById("projectBudget");
-  const projectStatusEl = document.getElementById("projectStatus");
+  // Получаем ссылки на элементы DOM
+  const projectTitleEl      = document.getElementById("projectTitle");
+  const projectDescEl       = document.getElementById("projectDescription");
+  const projectBudgetEl     = document.getElementById("projectBudget");
+  const projectStatusEl     = document.getElementById("projectStatus");
+  const appMessage          = document.getElementById("appMessage");
+  const applicationForm     = document.getElementById("applicationForm");
+  const applicationFormElem = document.getElementById("applicationFormElement");
+  const submitBtn           = document.getElementById("submitAppBtn");
 
-  const appMessage = document.getElementById("appMessage");
-  const applicationForm = document.getElementById("applicationForm");
-  const submitBtn = document.getElementById("submitAppBtn");
-
-  // При клике "Выйти"
+  // Обработчик “Выйти”
   document.getElementById("logoutBtn").addEventListener("click", () => {
     logout();
   });
 
-  // 1) Сначала проверим авторизацию: если не авторизован, редиректит на /
+  // 2) Проверка авторизации
   const userInfo = await requireAuth();
-  if (!userInfo) {
-    // requireAuth уже перенаправит, если пользователь не авторизован
-    return;
+  if (!userInfo) return; // requireAuth() уже редиректит, если не авторизован
 
-  
-  }
-
-  // 2) Загружаем данные о проекте (через API)
+  // 3) Загрузка данных о проекте
   let projectData;
   try {
-    const resp = await fetch(`${API_BASE}/api/projects/${projectId}`);
+    const resp = await fetch(`${API_BASE}/api/projects/${projectId}`, {
+      headers: { "Authorization": `Bearer ${getToken()}` }
+    });
     if (!resp.ok) {
       projectTitleEl.innerText = "Проект не найден";
       projectDescEl.innerText = "";
@@ -56,124 +55,150 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  // 3) Заполняем карточку проекта
-  projectTitleEl.innerText = projectData.title;
-  projectDescEl.innerText = projectData.description || "— Нет описания —";
+  // 4) Отображаем данные проекта
+  projectTitleEl.innerText  = projectData.title;
+  projectDescEl.innerText   = projectData.description || "— Нет описания —";
   projectBudgetEl.innerText = projectData.budget.toFixed(2);
   projectStatusEl.innerText = projectData.status;
 
-  // Если проект не "open", скрываем форму и показываем сообщение
- if (projectData.status !== "open") {
+  // Если проект закрыт — скрываем форму и выводим сообщение
+  if (projectData.status !== "open") {
     applicationForm.style.display = "none";
-    const msg = document.createElement("p");
-    msg.className = "message";
-    msg.innerText = "Нельзя подать заявку: проект закрыт.";
-    appMessage.appendChild(msg);
+    const info = document.createElement("p");
+    info.className = "message info";
+    info.innerText = "Нельзя подать заявку: проект закрыт.";
+    appMessage.appendChild(info);
     return;
   }
-   // 3.1) Кнопка «Смотреть заявки» (для работодателя)
-  if (userInfo.role === "employer" && userInfo.id === projectData.employer_id) {
-    const appsBtn = document.createElement("button");
-    appsBtn.innerText = "Смотреть заявки";
-    appsBtn.style.marginBottom = "16px";
-    appsBtn.addEventListener("click", () => {
-      window.location.href = `/projects/${projectId}/applications`;
-    });
-    const projectCard = document.getElementById("projectCard");
-    projectCard.insertAdjacentElement("beforebegin", appsBtn);
-  }
 
-
- 
-
- 
-  // 4) Проверяем, подавал ли этот фрилансер уже заявку на этот проект
+  // 5) Проверяем, есть ли уже заявка у этого фрилансера
+  let existingApp = null;
   try {
-    const meResp = await fetch(
+    const checkResp = await fetch(
       `${API_BASE}/api/applications/projects/${projectId}/applications/me`,
       {
-        headers: {
-          Authorization: `Bearer ${getToken()}`,
-        },
+        headers: { "Authorization": `Bearer ${getToken()}` }
       }
     );
-    if (meResp.ok) {
-      // Если 200, значит заявка уже есть
-      appMessage.innerHTML = `<p class="message error">You have already applied to this project</p>`;
-      // Делаем все поля формы неактивными:
-      Array.from(applicationForm.elements).forEach((el) => {
-        el.disabled = true;
-      });
-      return;
+    if (checkResp.ok) {
+      existingApp = await checkResp.json();
     }
-    // Если 404, значит заявки нет — показываем форму ниже
-    if (meResp.status !== 404) {
-      // Если получили что-то отличное от 200 и 404, показываем ошибку:
-      const errJson = await meResp.json();
-      appMessage.innerHTML = `<p class="message error">Ошибка проверки заявки: ${errJson.detail || JSON.stringify(errJson)}</p>`;
-      Array.from(applicationForm.elements).forEach((el) => {
-        el.disabled = true;
-      });
-      return;
-    }
-    // Если меResp.status == 404, значит заявки нет — оставляем форму активной
-  } catch (err) {
-    appMessage.innerHTML = `<p class="message error">Network error при проверке заявки: ${err.message}</p>`;
-    Array.from(applicationForm.elements).forEach((el) => {
-      el.disabled = true;
-    });
-    return;
+    // Если 404, оставляем existingApp = null
+  } catch {
+    existingApp = null;
   }
 
-  // 5) Обработка submit формы (только если заявки ещё не было)
-  applicationForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    appMessage.innerHTML = "";   // очистили старые сообщения
-    submitBtn.disabled = true;   // блокируем кнопку, пока идёт запрос
+  // 6) Если заявка существует — настроим форму для редактирования
+  if (existingApp) {
+    // Заполняем форму текущими данными
+    document.getElementById("proposalText").value  = existingApp.proposal_text;
+    document.getElementById("proposalPrice").value = existingApp.proposed_price;
 
-    const proposalText = document.getElementById("proposalText").value.trim();
-    const proposalPrice = document.getElementById("proposalPrice").value.trim();
-    if (!proposalText || !proposalPrice) {
-      appMessage.innerHTML = `<p class="message error">Пожалуйста, заполните все поля</p>`;
-      submitBtn.disabled = false;
-      return;
-    }
+    // Меняем текст кнопки
+    submitBtn.innerText = "Изменить заявку";
 
-    const body = {
-      proposal_text: proposalText,
-      proposed_price: parseFloat(proposalPrice),
-      status: "pending", // при создании заявка уходит в статус "pending"
-    };
+    // Вешаем единственный слушатель submit на редактирование
+    applicationFormElem.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      appMessage.innerHTML = "";
+      submitBtn.disabled = true;
 
-    try {
-      const resp = await fetch(
-        `${API_BASE}/api/applications/projects/${projectId}/applications/`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${getToken()}`,
-          },
-          body: JSON.stringify(body),
+      const proposalText  = document.getElementById("proposalText").value.trim();
+      const proposalPrice = document.getElementById("proposalPrice").value.trim();
+
+      if (!proposalText || !proposalPrice) {
+        appMessage.innerHTML = `<p class="message error">Пожалуйста, заполните все поля</p>`;
+        submitBtn.disabled = false;
+        return;
+      }
+
+      // Собираем body для PUT: оставляем status прежним
+      const body = {
+        proposal_text: proposalText,
+        proposed_price: parseFloat(proposalPrice),
+        status: existingApp.status   // существующий статус (например, "pending")
+      };
+
+      try {
+        const resp = await fetch(
+          `${API_BASE}/api/applications/${existingApp.id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${getToken()}`
+            },
+            body: JSON.stringify(body)
+          }
+        );
+
+        if (resp.ok) {
+          appMessage.innerHTML = `<p class="message success">Заявка успешно изменена!</p>`;
+        } else {
+          // Если пришла ошибка — показываем detail
+          const errJson = await resp.json();
+          const errMsg = errJson.detail || JSON.stringify(errJson);
+          appMessage.innerHTML = `<p class="message error">Ошибка: ${errMsg}</p>`;
         }
-      );
-
-      if (resp.status === 201) {
-        appMessage.innerHTML = `<p class="message success">Заявка успешно отправлена!</p>`;
-        applicationForm.reset();
-        // После успешной отправки делаем поля неактивными:
-        Array.from(applicationForm.elements).forEach((el) => {
-          el.disabled = true;
-        });
-      } else {
-        const errJson = await resp.json();
-        const errMsg = errJson.detail || JSON.stringify(errJson);
-        appMessage.innerHTML = `<p class="message error">Ошибка: ${errMsg}</p>`;
+      } catch (networkError) {
+        appMessage.innerHTML = `<p class="message error">Сетевая ошибка: ${networkError.message}</p>`;
+      } finally {
         submitBtn.disabled = false;
       }
-    } catch (networkError) {
-      appMessage.innerHTML = `<p class="message error">Network error: ${networkError.message}</p>`;
-      submitBtn.disabled = false;
-    }
-  });
+    });
+
+  } else {
+    // 7) Если заявки нет — настраиваем форму для создания новой
+    applicationFormElem.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      appMessage.innerHTML = "";
+      submitBtn.disabled = true;
+
+      const proposalText  = document.getElementById("proposalText").value.trim();
+      const proposalPrice = document.getElementById("proposalPrice").value.trim();
+
+      if (!proposalText || !proposalPrice) {
+        appMessage.innerHTML = `<p class="message error">Пожалуйста, заполните все поля</p>`;
+        submitBtn.disabled = false;
+        return;
+      }
+
+      // Собираем body для POST: принудительно “pending”
+      const body = {
+        proposal_text: proposalText,
+        proposed_price: parseFloat(proposalPrice),
+        status: "pending"
+      };
+
+      try {
+        const resp = await fetch(
+          `${API_BASE}/api/applications/projects/${projectId}/applications/`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${getToken()}`
+            },
+            body: JSON.stringify(body)
+          }
+        );
+
+        if (resp.status === 201) {
+          appMessage.innerHTML = `<p class="message success">Заявка успешно отправлена!</p>`;
+          // После создания можно заблокировать форму:
+          Array.from(applicationFormElem.elements).forEach((el) => {
+            el.disabled = true;
+          });
+        } else {
+          const errJson = await resp.json();
+          const errMsg = errJson.detail || JSON.stringify(errJson);
+          appMessage.innerHTML = `<p class="message error">Ошибка: ${errMsg}</p>`;
+        }
+      } catch (networkError) {
+        appMessage.innerHTML = `<p class="message error">Сетевая ошибка: ${networkError.message}</p>`;
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+  }
 });

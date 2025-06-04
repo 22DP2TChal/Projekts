@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 
 # Импорты из пакета app
 from app.database import get_db
@@ -32,7 +32,8 @@ def create_application_for_project(
     project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found"
         )
 
     # Проверяем, что проект открыт для заявок
@@ -85,11 +86,11 @@ def read_applications_for_project(
     Возвращает все заявки на указанный проект (project_id).
     Доступны только владельцу проекта (employer) или admin.
     """
-    # Проверяем, что проект существует
     project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found"
         )
 
     # Проверяем, что текущий пользователь — владелец проекта либо админ
@@ -99,7 +100,6 @@ def read_applications_for_project(
             detail="Not authorized to view applications for this project",
         )
 
-    # Возвращаем все заявки, связанные с этим проектом
     applications_list = (
         db.query(Application)
         .filter(Application.project_id == project_id)
@@ -138,7 +138,7 @@ def read_my_application(
     return application
 
 
-@router.get("/", response_model=list[ApplicationOut])
+@router.get("/", response_model=List[ApplicationOut])
 def read_applications(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     """
     Получить все заявки (admin), без фильтрации.
@@ -160,14 +160,16 @@ def read_application(application_id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/{application_id}", response_model=ApplicationOut)
-def update_application_status(
+def update_application(
     application_id: int,
     application_in: ApplicationUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
-    Обновление статуса заявки (только владелец проекта или admin).
+    Обновление заявки:
+      - Если role="freelancer" и это его заявка → может менять только proposal_text и proposed_price.
+      - Иначе (role="employer" на своём проекте или admin) → может менять только status.
     """
     application = (
         db.query(Application).filter(Application.id == application_id).first()
@@ -183,15 +185,35 @@ def update_application_status(
             status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
         )
 
+    # --- Фрилансер может редактировать только свою заявку (proposal_text и proposed_price) ---
+    if current_user.role == "freelancer" and application.freelancer_id == current_user.id:
+        if application_in.proposal_text is not None:
+            application.proposal_text = application_in.proposal_text
+        if application_in.proposed_price is not None:
+            application.proposed_price = application_in.proposed_price
+        # Поле status фрилансером не меняется, даже если пришло в application_in
+        db.commit()
+        db.refresh(application)
+        return application
+
+    # --- Иначе разрешаем только владельцу проекта (employer) или admin менять status ---
     if project.employer_id != current_user.id and current_user.role != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized"
         )
 
-    application.status = application_in.status
-    db.commit()
-    db.refresh(application)
-    return application
+    # Если это employer или admin, то редактируем поле status
+    if application_in.status is not None:
+        application.status = application_in.status
+        db.commit()
+        db.refresh(application)
+        return application
+
+    # Если employer/admin не указал новый status → 400 Bad Request
+    raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="No status provided for update"
+    )
 
 
 @router.delete("/{application_id}", status_code=status.HTTP_204_NO_CONTENT)

@@ -5,21 +5,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Детали проекта — Freelance System</title>
+  <!-- Подключаем внешний CSS -->
   <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
-  <style>
-    .detail-header {
-      margin-bottom: 20px;
-      font-family: var(--font-heading);
-      font-size: 1.5rem;
-      color: var(--color-text);
-    }
-    .project-detail-card {
-      max-width: 700px;
-      margin: 0 auto 24px;
-    }
-  </style>
 </head>
 <body>
+  <!-- Навигационная панель -->
   <nav>
     <div class="nav-left">
       <a href="/projects" class="logo">← Все проекты</a>
@@ -30,38 +20,57 @@
   </nav>
 
   <div class="container">
+    <!-- Заголовок страницы -->
     <h2 class="detail-header">Детали проекта</h2>
+
     <!-- Карточка с данными проекта -->
     <div class="card project-detail-card" id="projectCard">
       <div class="card-header" id="projectTitle">Загрузка…</div>
       <div class="card-body">
-        <p id="projectDescription">Подождите, загружаем описание…</p>
+        <p id="projectDescription">Пожалуйста, подождите, загружаем данные проекта…</p>
       </div>
       <div class="card-footer">
         <span class="status">Статус: <strong id="projectStatus">—</strong></span>
-        <span style="margin-left: 20px;"><strong>Бюджет:</strong> ₽<span id="projectBudget">—</span></span>
+        <span><strong>Бюджет:</strong> ₽<span id="projectBudget">—</span></span>
       </div>
     </div>
 
-    <!-- Форма подачи заявки (для фрилансера) -->
-    <div class="form-wrapper" id="applicationFormContainer">
+    <!-- Форма подачи/редактирования заявки (для фрилансера) -->
+    <div class="application-form" id="applicationForm">
       <h3>Подать заявку</h3>
-      <div id="appMessage" class="message" style="display: none;"></div>
-      <form id="applicationForm">
+      <div id="appMessage" class="message"></div>
+      <form id="applicationFormElement">
         <div class="form-group">
-          <label for="proposalText">Текст предложения</label>
-          <textarea id="proposalText" placeholder="Опишите ваше предложение…" required></textarea>
+          <label for="proposalText">Ваше предложение</label>
+          <textarea
+            id="proposalText"
+            rows="4"
+            placeholder="Опишите своё видение задачи…"
+            required
+          ></textarea>
         </div>
+
         <div class="form-group">
           <label for="proposalPrice">Ваша цена (₽)</label>
-          <input type="number" id="proposalPrice" step="0.01" min="0.01" placeholder="Например, 1000.00" required>
+          <input
+            type="number"
+            id="proposalPrice"
+            step="0.01"
+            min="0.01"
+            placeholder="Например, 100.00"
+            required
+          />
         </div>
-        <button type="submit" class="primary-btn" id="submitAppBtn">Отправить заявку</button>
+
+        <button type="submit" class="primary-btn" id="submitAppBtn">
+          Отправить заявку
+        </button>
       </form>
     </div>
   </div>
 
-  <script src="{{ url_for('static', path='js/common.js') }}?v=1.0"></script>
-  <script src="{{ url_for('static', path='js/application.js') }}?v=1.0"></script>
+  <!-- Подключаем JS -->
+  <script src="{{ url_for('static', path='js/common.js') }}"></script>
+  <script src="{{ url_for('static', path='js/application.js') }}"></script>
 </body>
 </html>

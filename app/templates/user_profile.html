@@ -1,0 +1,66 @@
+<!-- app/templates/user_profile.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Профиль пользователя — Freelance System</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
+</head>
+<body>
+  <!-- Навигация, логотип, кнопка “Выйти” и т.п. -->
+  <nav style="background-color: var(--color-card-bg); display: flex; justify-content: space-between; align-items: center; padding: 12px 24px; box-shadow: var(--shadow-light); margin-bottom: 24px; border-radius: var(--radius-card); max-width: 900px; margin: 0 auto;">
+    <a id="navLogo" href="/project" class="logo" style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: bold; color: var(--color-primary);">Freelance System</a>
+    <div>
+      <span id="navWelcome" style="margin-right: 16px;"></span>
+      <button id="navLogoutBtn" style="background: none; border: none; color: var(--color-primary); cursor: pointer; font-size: 1rem;">Выйти</button>
+    </div>
+  </nav>
+
+  <!-- Карточка профиля -->
+  <div class="profile-card" style="max-width: 600px; margin: 0 auto 24px auto; background: var(--color-card-bg); padding: 16px; border-radius: var(--radius-card); box-shadow: var(--shadow-light);">
+    <h2>Профиль пользователя</h2>
+    <div id="profileContent">
+      <!-- JS подставит сюда ID, Email, Role, Status и т.д. -->
+    </div>
+  </div>
+
+  <!-- Раздел отзывов -->
+  <div class="reviews-section" style="max-width: 600px; margin: 0 auto 24px auto; background: var(--color-card-bg); padding: 16px; border-radius: var(--radius-card); box-shadow: var(--shadow-light);">
+    <h3>Отзывы о пользователе</h3>
+
+    <!-- Здесь будет список всех отзывов -->
+    <div id="userReviewsList">
+      <p>Загрузка отзывов…</p>
+    </div>
+
+    <!-- Форма для оставления нового отзыва (по умолчанию скрыта) -->
+    <div id="leaveReviewWrapper" style="display: none; margin-top: 24px; padding: 16px; background: var(--color-card-bg); border-radius: var(--radius-card); box-shadow: var(--shadow-light);">
+      <h4>Оставить отзыв</h4>
+      <div id="leaveReviewMessage" class="message" style="display: none;"></div>
+      <form id="leaveReviewForm">
+        <div class="form-group">
+          <label for="reviewRating">Рейтинг (1–5):</label>
+          <select id="reviewRating" required>
+            <option value="" disabled selected>Выберите</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="reviewComment">Комментарий (необязательно):</label>
+          <textarea id="reviewComment" rows="3" placeholder="Ваши впечатления…"></textarea>
+        </div>
+        <button type="submit" class="primary-btn">Отправить отзыв</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Подключаем JS -->
+  <script src="{{ url_for('static', path='js/common.js') }}"></script>
+  <script src="{{ url_for('static', path='js/user_profile.js') }}"></script>
+</body>
+</html>

@@ -9,12 +9,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   const budgetInput      = document.getElementById("projectBudget");
 
   // 1) Проверяем авторизацию и получаем пользователя
-  let user = null;
+    let user = null;
   try {
-    user = await requireAuth(); // если не авторизован, редиректит на "/"
+    user = await requireAuth(); // если нет токена или он невалиден, JS сам сделает window.location.href = '/'
   } catch {
     return;
   }
+
 
   // 2) Показываем кнопку «Выйти»
   logoutBtn.style.display = "inline";

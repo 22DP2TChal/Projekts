@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
-# Импорты из пакета app
 from app.database import get_db
 from app.schemas import ApplicationCreate, ApplicationOut, ApplicationUpdate
 from app.models import Application, Project, User
@@ -86,6 +85,7 @@ def read_applications_for_project(
     Возвращает все заявки на указанный проект (project_id).
     Доступны только владельцу проекта (employer) или admin.
     """
+    print(123)
     project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
         raise HTTPException(

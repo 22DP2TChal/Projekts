@@ -19,6 +19,7 @@ def create_review_for_application(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
+    print(2)
     """
     Оставление отзыва: только employer (владелец проекта) или admin, если статус заявки == "accepted".
     """
@@ -60,6 +61,7 @@ def read_review_for_application(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
+    print(1)
     """
     Получение отзыва по заявке (любой авторизованный пользователь).
     """

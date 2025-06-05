@@ -58,3 +58,21 @@ def read_users_me(current_user: User = Depends(get_current_active_user)):
     Получить информацию о текущем авторизованном пользователе.
     """
     return current_user
+
+
+@router.get("/{user_id}", response_model=UserOut)
+def read_user_by_id(
+    user_id: int,
+    db: Session = Depends(get_db),
+):
+    """
+    Публичный профиль пользователя по его ID.
+    Доступен всем (без авторизации).
+    """
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Пользователь не найден."
+        )
+    return user

@@ -1,5 +1,8 @@
 # app/schemas.py
 
+from datetime import datetime
+
+
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, Literal
 
@@ -15,9 +18,12 @@ class UserCreate(BaseModel):
 
 class UserOut(BaseModel):
     id: int
-    email: EmailStr
-    role: Literal["freelancer", "employer", "admin"]
+    email: str
+    role: str
     status: str
+    about: Optional[str] = None
+    # если есть теги:
+    # tags: Optional[List[str]] = []
 
     class Config:
         orm_mode = True
@@ -107,6 +113,22 @@ class ReviewOut(ReviewBase):
     id: int
     application_id: int
     created_at: Optional[str]
+
+    class Config:
+        orm_mode = True
+
+
+class UserReviewCreate(BaseModel):
+    rating: int = Field(..., ge=1, le=5, description="Рейтинг от 1 до 5")
+    comment: Optional[str] = Field(None, max_length=1000, description="Комментарий (необязательно)")
+
+class UserReviewOut(BaseModel):
+    id: int
+    reviewer_id: int
+    reviewed_id: int
+    rating: int
+    comment: Optional[str]
+    created_at: datetime
 
     class Config:
         orm_mode = True

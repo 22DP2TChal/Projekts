@@ -11,19 +11,34 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   let user = null;
   try {
+    // Попробуем получить текущего пользователя; если не авторизован — requireAuth() сам редиректит на "/"
     user = await requireAuth();
   } catch {
-    // Гость может видеть список проектов без авторизации
+    // Если нет токена или он невалиден, JS уже ушёл на "/", и дальше этот код не выполняется
+    return;
   }
 
-  if (user) {
-    navWelcome.innerText = `Добро пожаловать, ${user.email}`;
-    navLogoutBtn.style.display = "inline";
-    navLogoutBtn.addEventListener("click", logout);
+
+    // **Наш новый блок (HTML)**
+  const createBtnWrapper = document.getElementById("createProjectBtnWrapper");
+  const createBtn = document.getElementById("createProjectBtn");
+  
+   // 1) Заменяем href у “Freelance System” на переход в профиль:
+  if (user && navLogo) {
+    navLogo.href = `/users/${user.id}`;
+  }
+  if (window.location.pathname.includes("/profile")) {
+    if (navLogo) {
+       navLogo.href = "/projects";
+    }
+  } else {
+  
   }
 
-  // Начальная загрузка проектов
+  // Остальной код остаётся без изменений...
+  navLogoutBtn.addEventListener("click", logout);
   await loadProjects(user, "", "");
+
 
   // Дебаунс-функция для автоматического поиска/фильтрации
   let debounceTimer;
@@ -35,6 +50,15 @@ document.addEventListener("DOMContentLoaded", async () => {
       await loadProjects(user, searchValue, statusValue);
     }, 300);
   }
+
+
+  if (user && user.role === "employer" && createBtnWrapper && createBtn) {
+    createBtnWrapper.style.display = "block";
+    createBtn.addEventListener("click", () => {
+      window.location.href = "/projects/create";
+    });
+  }
+
 
   searchInput.addEventListener("input", debounceLoad);
   statusFilter.addEventListener("change", debounceLoad);
@@ -69,7 +93,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         return;
       }
 
-      // Если работодатель, показываем только свои проекты
+      // Если работодатель, фильтруем только свои проекты
       if (user && user.role === "employer") {
         projects = projects.filter(proj => proj.employer_id === user.id);
       }
@@ -113,22 +137,20 @@ document.addEventListener("DOMContentLoaded", async () => {
           buttonsContainer.appendChild(actionBtn);
         }
 
-        // Гость — просто «Смотреть» (если проект открыт)
-        if (!user || (user.role !== "employer" && user.role !== "freelancer")) {
-          if (proj.status === "open") {
-            const viewBtn = document.createElement("button");
-            viewBtn.className = "primary-btn";
-            viewBtn.innerText = "Смотреть";
-            viewBtn.addEventListener("click", () => {
-              window.location.href = `/projects/${proj.id}`;
-            });
-            buttonsContainer.appendChild(viewBtn);
-          }
+        // Гость или другие роли (не владелец и не фрилансер) — «Смотреть» (если проект открыт)
+        if ((!user || (user.role !== "employer" && user.role !== "freelancer")) && proj.status === "open") {
+          const viewBtn = document.createElement("button");
+          viewBtn.className = "primary-btn";
+          viewBtn.innerText = "Смотреть";
+          viewBtn.addEventListener("click", () => {
+            window.location.href = `/projects/${proj.id}`;
+          });
+          buttonsContainer.appendChild(viewBtn);
         }
 
-        // Если работодатель — «Смотреть заявки», «Статистика» и селект для смены статуса
+        // Если работодатель и это его проект — «Смотреть заявки», «Статистика» и селект для смены статуса
         if (user && user.role === "employer" && proj.employer_id === user.id) {
-          // 1) Кнопка «Смотреть заявки»
+          // 1) «Смотреть заявки»
           const viewAppsBtn = document.createElement("button");
           viewAppsBtn.className = "primary-btn";
           viewAppsBtn.innerText = "Смотреть заявки";
@@ -137,7 +159,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           });
           buttonsContainer.appendChild(viewAppsBtn);
 
-          // 2) Кнопка «Статистика»
+          // 2) «Статистика»
           const statsBtn = document.createElement("button");
           statsBtn.className = "primary-btn";
           statsBtn.style.marginLeft = "8px";

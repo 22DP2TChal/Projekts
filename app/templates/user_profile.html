@@ -24,6 +24,34 @@
       <!-- JS подставит сюда ID, Email, Role, Status и т.д. -->
     </div>
   </div>
+<!-- … код выше (навигатор, карточка профиля) … -->
+
+<!-- ==== Форма редактирования профиля ==== -->
+<div id="editProfileWrapper" class="card" style="display: none; margin-top: 24px; padding: 16px; background: var(--color-card-bg); border-radius: var(--radius-card); box-shadow: var(--shadow-light);">
+  <h4>Редактировать профиль</h4>
+  <div id="editProfileMessage" class="message" style="display: none;"></div>
+  <form id="editProfileForm">
+    <!-- Поле «О себе» -->
+    <div class="form-group">
+      <label for="aboutText">О себе:</label>
+      <textarea id="aboutText" rows="4" placeholder="Расскажите о себе…"></textarea>
+    </div>
+
+    <!-- Новое поле: Теги (через запятую) -->
+    <div class="form-group">
+      <label for="tagsInput">Теги (через запятую):</label>
+      <input type="text" id="tagsInput" placeholder="Например: JavaScript, HTML, Django" />
+      <small style="color: #666; font-size: 0.9rem; margin-top: 4px; display: block;">
+        Введите несколько тегов через запятую (без пробелов в начале/конце).
+      </small>
+    </div>
+
+    <button type="submit" class="primary-btn">Сохранить</button>
+  </form>
+</div>
+
+<!-- … дальше раздел отзывов … -->
+
 
   <!-- Раздел отзывов -->
   <div class="reviews-section" style="max-width: 600px; margin: 0 auto 24px auto; background: var(--color-card-bg); padding: 16px; border-radius: var(--radius-card); box-shadow: var(--shadow-light);">
@@ -62,5 +90,6 @@
   <!-- Подключаем JS -->
   <script src="{{ url_for('static', path='js/common.js') }}"></script>
   <script src="{{ url_for('static', path='js/user_profile.js') }}"></script>
+  
 </body>
 </html>

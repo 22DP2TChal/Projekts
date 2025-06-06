@@ -9,7 +9,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // 1) Получаем projectId из URL: /projects/{id}/applications
   const pathParts = window.location.pathname.split("/");
-  // Например: ["", "projects", "123", "applications"]
   const projectId = pathParts[pathParts.length - 2];
 
   // 2) Проверяем авторизацию и получаем текущего пользователя
@@ -25,7 +24,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     );
 
-    // 3.a) Обработка ошибок сервера
     if (resp.status === 403) {
       const data = await resp.json().catch(() => ({}));
       showMessage(data.detail || "Доступ запрещён", true);
@@ -42,73 +40,103 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    // 3.b) Если всё ок — рендерим карточки
     const applications = await resp.json();
     if (!applications || applications.length === 0) {
       showMessage("Пока нет заявок на этот проект.", false);
       return;
     }
 
-    // Очищаем контейнер и скрываем сообщение
     cardsContainer.innerHTML = "";
     appsMessage.style.display = "none";
 
-    // 4) Создаём карточку для каждой заявки
-    applications.forEach((app) => {
+    for (const app of applications) {
+      let freelancerData = null;
+      try {
+        const userResp = await fetch(
+          `${API_BASE}/api/users/${app.freelancer_id}`,
+          { headers: { "Authorization": `Bearer ${getToken()}` } }
+        );
+        if (userResp.ok) {
+          freelancerData = await userResp.json();
+        }
+      } catch {
+        freelancerData = null;
+      }
+
       const card = document.createElement("div");
       card.className = "app-card";
 
-      // 4.a) Заголовок: номер заявки и email/ID фрилансера
       const header = document.createElement("div");
       header.className = "app-card-header";
-      header.innerText = `Заявка #${app.id} от ${app.freelancer_email || app.freelancer_id}`;
+
+      if (freelancerData) {
+        // Отображаем email без ссылки
+        header.innerText = `Заявка #${app.id} от ${freelancerData.email}`;
+      } else {
+        header.innerText = `Заявка #${app.id} от ID ${app.freelancer_id}`;
+      }
       card.appendChild(header);
 
-      // 4.b) Тело карточки: текст, цена, статус
       const body = document.createElement("div");
       body.className = "app-card-body";
 
-      // Текст предложения
+      if (freelancerData) {
+        const pEmail = document.createElement("p");
+        pEmail.innerHTML = `<span class="label">Email:</span> ${freelancerData.email}`;
+        body.appendChild(pEmail);
+
+        const pRole = document.createElement("p");
+        pRole.innerHTML = `<span class="label">Роль:</span> ${freelancerData.role}`;
+        body.appendChild(pRole);
+
+        const pStatus = document.createElement("p");
+        pStatus.innerHTML = `<span class="label">Статус:</span> ${freelancerData.status}`;
+        body.appendChild(pStatus);
+
+        if (freelancerData.about) {
+          const pAbout = document.createElement("p");
+          pAbout.innerHTML = `<span class="label">О себе:</span> ${freelancerData.about}`;
+          body.appendChild(pAbout);
+        }
+      }
+
       const pText = document.createElement("p");
       pText.innerHTML = `<span class="label">Предложение:</span> ${app.proposal_text}`;
       body.appendChild(pText);
 
-      // Предложенная цена
       const pPrice = document.createElement("p");
-      pPrice.innerHTML = `<span class="label">Цена:</span> ₽${parseFloat(app.proposed_price).toFixed(2)}`;
+      pPrice.innerHTML = `<span class="label">Цена:</span> ₽${parseFloat(
+        app.proposed_price
+      ).toFixed(2)}`;
       body.appendChild(pPrice);
 
-      // Статус
-      const pStatus = document.createElement("p");
-      pStatus.innerHTML = `<span class="label">Статус:</span> ${app.status}`;
-      body.appendChild(pStatus);
+      const pAppStatus = document.createElement("p");
+      pAppStatus.innerHTML = `<span class="label">Статус:</span> ${app.status}`;
+      body.appendChild(pAppStatus);
 
       card.appendChild(body);
 
-      // 4.c) Футер карточки: дата создания
+      // Добавляем кнопку «Посмотреть профиль»
       const footer = document.createElement("div");
       footer.className = "app-card-footer";
-      let createdAt = "";
-      if (app.created_at) {
-        const dt = new Date(app.created_at);
-        createdAt = dt.toLocaleString("ru-RU", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        });
-      }
-      footer.innerText = `Создано: ${createdAt}`;
-      card.appendChild(footer);
 
+      if (freelancerData) {
+        const btn = document.createElement("button");
+        btn.innerText = "Посмотреть профиль";
+        btn.className = "primary-btn";
+        btn.addEventListener("click", () => {
+          window.location.href = `/users/${freelancerData.id}/profile`;
+        });
+        footer.appendChild(btn);
+      }
+
+      card.appendChild(footer);
       cardsContainer.appendChild(card);
-    });
+    }
   } catch (err) {
     showMessage(`Сетевая ошибка: ${err.message}`, true);
   }
 
-  // Вспомогательная функция для показа сообщений
   function showMessage(text, isError) {
     cardsContainer.innerHTML = "";
     appsMessage.innerText = text;

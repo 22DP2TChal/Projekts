@@ -87,7 +87,7 @@ class Project(Base):
     # Обратная связь с User (работодатель, который создал проект)
     employer = relationship("User", back_populates="projects")
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False) 
-    
+
     # “Заявки” (Application) к этому проекту
     applications = relationship("Application", back_populates="project", cascade="all, delete-orphan")
 
@@ -116,7 +116,6 @@ class Application(Base):
     reviews = relationship("Review", back_populates="application", cascade="all, delete-orphan")
 
 
-# — Модель “Review” (привязанная к заявке) —
 class Review(Base):
     __tablename__ = "reviews"
 

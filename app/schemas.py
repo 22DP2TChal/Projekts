@@ -4,7 +4,7 @@ from datetime import datetime
 
 
 from pydantic import BaseModel, EmailStr, Field
-from typing import Optional, Literal
+from typing import List, Optional, Literal
 
 
 # ------------------------------
@@ -132,3 +132,45 @@ class UserReviewOut(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class TagBase(BaseModel):
+    name: str
+
+    class Config:
+        orm_mode = True
+
+
+class TagOut(TagBase):
+    id: int
+
+
+# --------------------
+# 2. Схемы для User
+# --------------------
+
+# Схема, которой будем отдавать полную информацию о пользователе (UserOut),
+# включая список связанных тегов.
+class UserOut(BaseModel):
+    id: int
+    email: str
+    role: str
+    status: str
+    about: Optional[str] = None
+    tags: List[TagOut] = []             # В output отдаём список объектов TagOut, а не строк
+
+    class Config:
+        orm_mode = True
+
+
+# При создании пользователя (например, регистрация) можно оставить прежними,
+# либо добавить tags=Optional[List[str]] по необходимости. Но здесь нас интересует обновление.
+
+# Схема для обновления профиля пользователя:
+class UserUpdate(BaseModel):
+    about: Optional[str] = None
+    tags: Optional[List[str]] = None     # Принимаем список имён тегов (строки)
+
+    class Config:
+        orm_mode = True
+

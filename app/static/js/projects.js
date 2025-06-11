@@ -1,5 +1,3 @@
-// app/static/js/projects.js
-
 document.addEventListener("DOMContentLoaded", async () => {
   const navWelcome      = document.getElementById("navWelcome");
   const navLogoutBtn    = document.getElementById("navLogoutBtn");
@@ -11,19 +9,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   let user = null;
   try {
-    // Попробуем получить текущего пользователя; если не авторизован — requireAuth() сам редиректит на "/"
+    // Try to get the current user; if unauthorized, requireAuth() redirects to "/"
     user = await requireAuth();
   } catch {
-    // Если нет токена или он невалиден, JS уже ушёл на "/", и дальше этот код не выполняется
+    // If no token or it's invalid, JS already redirected to "/", so this code won't execute further
     return;
   }
 
-
-    // **Наш новый блок (HTML)**
+  // **Our new HTML block**
   const createBtnWrapper = document.getElementById("createProjectBtnWrapper");
   const createBtn = document.getElementById("createProjectBtn");
   
-   // 1) Заменяем href у “Freelance System” на переход в профиль:
+  // 1) Replace href of “Freelance System” to navigate to profile:
+  const navLogo = document.getElementById("navLogo");
   if (user && navLogo) {
     navLogo.href = `/users/${user.id}`;
   }
@@ -32,15 +30,14 @@ document.addEventListener("DOMContentLoaded", async () => {
        navLogo.href = "/projects";
     }
   } else {
-  
+    // No action needed here
   }
 
-  // Остальной код остаётся без изменений...
+  // The rest of the code remains unchanged...
   navLogoutBtn.addEventListener("click", logout);
   await loadProjects(user, "", "");
 
-
-  // Дебаунс-функция для автоматического поиска/фильтрации
+  // Debounce function for automatic search/filter
   let debounceTimer;
   function debounceLoad() {
     clearTimeout(debounceTimer);
@@ -51,7 +48,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }, 300);
   }
 
-
   if (user && user.role === "employer" && createBtnWrapper && createBtn) {
     createBtnWrapper.style.display = "block";
     createBtn.addEventListener("click", () => {
@@ -59,11 +55,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-
   searchInput.addEventListener("input", debounceLoad);
   statusFilter.addEventListener("change", debounceLoad);
 
-  // Основная функция загрузки и отрисовки списка проектов
+  // Main function to load and render the list of projects
   async function loadProjects(user, searchValue, statusValue) {
     projectsListDiv.innerHTML = "";
     projectsMessage.innerHTML = "";
@@ -89,11 +84,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       let projects = await resp.json();
 
       if (!projects || projects.length === 0) {
-        projectsListDiv.innerHTML = "<p>Проектов не найдено.</p>";
+        projectsListDiv.innerHTML = "<p>No projects found.</p>";
         return;
       }
 
-      // Если работодатель, фильтруем только свои проекты
+      // If user is employer, filter only their own projects
       if (user && user.role === "employer") {
         projects = projects.filter(proj => proj.employer_id === user.id);
       }
@@ -104,18 +99,18 @@ document.addEventListener("DOMContentLoaded", async () => {
         card.innerHTML = `
           <div class="card-header">${proj.title}</div>
           <div class="card-body">
-            <p>${ proj.description || "<em>Без описания</em>" }</p>
-            <p><strong>Бюджет:</strong> ₽${ proj.budget.toFixed(2) }</p>
+            <p>${ proj.description || "<em>No description</em>" }</p>
+            <p><strong>Budget:</strong> ₽${ proj.budget.toFixed(2) }</p>
           </div>
           <div class="card-footer">
-            <span class="status">Статус: ${proj.status}</span>
+            <span class="status">Status: ${proj.status}</span>
             <div class="card-buttons"></div>
           </div>
         `;
 
         const buttonsContainer = card.querySelector(".card-buttons");
 
-        // Если фрилансер и проект открыт — «Подать/Редактировать заявку»
+        // If freelancer and project is open — “Apply/Edit Application”
         if (user && user.role === "freelancer" && proj.status === "open") {
           let hasApplied = false;
           try {
@@ -130,40 +125,40 @@ document.addEventListener("DOMContentLoaded", async () => {
 
           const actionBtn = document.createElement("button");
           actionBtn.className = "primary-btn";
-          actionBtn.innerText = hasApplied ? "Редактировать заявку" : "Подать заявку";
+          actionBtn.innerText = hasApplied ? "Edit Application" : "Apply";
           actionBtn.addEventListener("click", () => {
             window.location.href = `/projects/${proj.id}`;
           });
           buttonsContainer.appendChild(actionBtn);
         }
 
-        // Гость или другие роли (не владелец и не фрилансер) — «Смотреть» (если проект открыт)
+        // Guest or other roles (not employer or freelancer) — “View” (if project is open)
         if ((!user || (user.role !== "employer" && user.role !== "freelancer")) && proj.status === "open") {
           const viewBtn = document.createElement("button");
           viewBtn.className = "primary-btn";
-          viewBtn.innerText = "Смотреть";
+          viewBtn.innerText = "View";
           viewBtn.addEventListener("click", () => {
             window.location.href = `/projects/${proj.id}`;
           });
           buttonsContainer.appendChild(viewBtn);
         }
 
-        // Если работодатель и это его проект — «Смотреть заявки», «Статистика» и селект для смены статуса
+        // If employer and this is their project — “View Applications”, “Statistics”, and a select to change project status
         if (user && user.role === "employer" && proj.employer_id === user.id) {
-          // 1) «Смотреть заявки»
+          // 1) “View Applications”
           const viewAppsBtn = document.createElement("button");
           viewAppsBtn.className = "primary-btn";
-          viewAppsBtn.innerText = "Смотреть заявки";
+          viewAppsBtn.innerText = "View Applications";
           viewAppsBtn.addEventListener("click", () => {
             window.location.href = `/projects/${proj.id}/applications`;
           });
           buttonsContainer.appendChild(viewAppsBtn);
 
-          // 2) «Статистика»
+          // 2) “Statistics”
           const statsBtn = document.createElement("button");
           statsBtn.className = "primary-btn";
           statsBtn.style.marginLeft = "8px";
-          statsBtn.innerText = "Статистика";
+          statsBtn.innerText = "Statistics";
           statsBtn.addEventListener("click", async () => {
             try {
               const statsResp = await fetch(
@@ -173,24 +168,24 @@ document.addEventListener("DOMContentLoaded", async () => {
               if (!statsResp.ok) throw new Error(`HTTP ${statsResp.status}`);
               const statsData = await statsResp.json();
               alert(
-                `Проект "${proj.title}"\n` +
-                `– Всего заявок: ${statsData.application_count}\n` +
-                `– Средняя цена: ₽${statsData.avg_price.toFixed(2)}`
+                `Project "${proj.title}"\n` +
+                `– Total applications: ${statsData.application_count}\n` +
+                `– Average price: ₽${statsData.avg_price.toFixed(2)}`
               );
             } catch (e) {
-              alert(`Не удалось получить статистику: ${e.message}`);
+              alert(`Failed to fetch statistics: ${e.message}`);
             }
           });
           buttonsContainer.appendChild(statsBtn);
 
-          // 3) Селект для смены статуса проекта
+          // 3) Select for changing project status
           const statusSelect = document.createElement("select");
           statusSelect.style.marginLeft = "8px";
 
           const statuses = [
-            { value: "open",        label: "Открыт" },
-            { value: "in_progress", label: "В работе" },
-            { value: "closed",      label: "Закрыт" }
+            { value: "open",        label: "Open" },
+            { value: "in_progress", label: "In Progress" },
+            { value: "closed",      label: "Closed" }
           ];
 
           statuses.forEach(({ value, label }) => {
@@ -217,7 +212,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
               if (resp.ok) {
                 const statusSpan = card.querySelector(".status");
-                statusSpan.innerHTML = `Статус: ${newStatus}`;
+                statusSpan.innerHTML = `Status: ${newStatus}`;
               } else {
                 let errMsg = `HTTP ${resp.status}`;
                 const contentType = resp.headers.get("content-type") || "";
@@ -225,11 +220,11 @@ document.addEventListener("DOMContentLoaded", async () => {
                   const errJson = await resp.json();
                   errMsg = JSON.stringify(errJson, null, 2);
                 }
-                alert(`Не удалось изменить статус:\n${errMsg}`);
+                alert(`Failed to change status:\n${errMsg}`);
                 statusSelect.value = proj.status;
               }
             } catch (err) {
-              alert(`Сетевая ошибка при изменении статуса: ${err.message}`);
+              alert(`Network error while changing status: ${err.message}`);
               statusSelect.value = proj.status;
             }
           });
@@ -242,7 +237,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     } catch (err) {
       projectsMessage.classList.add("error");
-      projectsMessage.innerText = `Ошибка при загрузке проектов: ${err.message}`;
+      projectsMessage.innerText = `Error loading projects: ${err.message}`;
       projectsMessage.style.display = "block";
     }
   }

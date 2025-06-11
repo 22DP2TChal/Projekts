@@ -7,15 +7,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   logoutBtn.addEventListener("click", logout);
 
-  // 1) Получаем projectId из URL: /projects/{id}/applications
+  // 1) Extract projectId from URL: /projects/{id}/applications
   const pathParts = window.location.pathname.split("/");
   const projectId = pathParts[pathParts.length - 2];
 
-  // 2) Проверяем авторизацию и получаем текущего пользователя
+  // 2) Check authorization and get current user
   const userInfo = await requireAuth();
-  if (!userInfo) return; // если не авторизован, requireAuth() редиректит на /
+  if (!userInfo) return; // if not authorized, requireAuth redirects to "/"
 
-  // 3) Запрашиваем список заявок через API
+  // 3) Fetch applications list from API
   try {
     const resp = await fetch(
       `${API_BASE}/api/applications/projects/${projectId}/applications/`,
@@ -26,23 +26,23 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (resp.status === 403) {
       const data = await resp.json().catch(() => ({}));
-      showMessage(data.detail || "Доступ запрещён", true);
+      showMessage(data.detail || "Access denied", true);
       return;
     }
     if (resp.status === 404) {
       const data = await resp.json().catch(() => ({}));
-      showMessage(data.detail || "Проект не найден", true);
+      showMessage(data.detail || "Project not found", true);
       return;
     }
     if (!resp.ok) {
       const data = await resp.json().catch(() => ({}));
-      showMessage(`Ошибка: ${data.detail || JSON.stringify(data)}`, true);
+      showMessage(`Error: ${data.detail || JSON.stringify(data)}`, true);
       return;
     }
 
     const applications = await resp.json();
     if (!applications || applications.length === 0) {
-      showMessage("Пока нет заявок на этот проект.", false);
+      showMessage("No applications yet for this project.", false);
       return;
     }
 
@@ -68,13 +68,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       const header = document.createElement("div");
       header.className = "app-card-header";
-
-      if (freelancerData) {
-        // Отображаем email без ссылки
-        header.innerText = `Заявка #${app.id} от ${freelancerData.email}`;
-      } else {
-        header.innerText = `Заявка #${app.id} от ID ${app.freelancer_id}`;
-      }
+      header.innerText = freelancerData
+        ? `Application #${app.id} from ${freelancerData.email}`
+        : `Application #${app.id} from ID ${app.freelancer_id}`;
       card.appendChild(header);
 
       const body = document.createElement("div");
@@ -86,43 +82,41 @@ document.addEventListener("DOMContentLoaded", async () => {
         body.appendChild(pEmail);
 
         const pRole = document.createElement("p");
-        pRole.innerHTML = `<span class="label">Роль:</span> ${freelancerData.role}`;
+        pRole.innerHTML = `<span class="label">Role:</span> ${freelancerData.role}`;
         body.appendChild(pRole);
 
         const pStatus = document.createElement("p");
-        pStatus.innerHTML = `<span class="label">Статус:</span> ${freelancerData.status}`;
+        pStatus.innerHTML = `<span class="label">Status:</span> ${freelancerData.status}`;
         body.appendChild(pStatus);
 
         if (freelancerData.about) {
           const pAbout = document.createElement("p");
-          pAbout.innerHTML = `<span class="label">О себе:</span> ${freelancerData.about}`;
+          pAbout.innerHTML = `<span class="label">About:</span> ${freelancerData.about}`;
           body.appendChild(pAbout);
         }
       }
 
       const pText = document.createElement("p");
-      pText.innerHTML = `<span class="label">Предложение:</span> ${app.proposal_text}`;
+      pText.innerHTML = `<span class="label">Proposal:</span> ${app.proposal_text}`;
       body.appendChild(pText);
 
       const pPrice = document.createElement("p");
-      pPrice.innerHTML = `<span class="label">Цена:</span> ₽${parseFloat(
-        app.proposed_price
-      ).toFixed(2)}`;
+      pPrice.innerHTML = `<span class="label">Price:</span> ₽${parseFloat(app.proposed_price).toFixed(2)}`;
       body.appendChild(pPrice);
 
       const pAppStatus = document.createElement("p");
-      pAppStatus.innerHTML = `<span class="label">Статус:</span> ${app.status}`;
+      pAppStatus.innerHTML = `<span class="label">Status:</span> ${app.status}`;
       body.appendChild(pAppStatus);
 
       card.appendChild(body);
 
-      // Добавляем кнопку «Посмотреть профиль»
+      // Add “View Profile” button
       const footer = document.createElement("div");
       footer.className = "app-card-footer";
 
       if (freelancerData) {
         const btn = document.createElement("button");
-        btn.innerText = "Посмотреть профиль";
+        btn.innerText = "View Profile";
         btn.className = "primary-btn";
         btn.addEventListener("click", () => {
           window.location.href = `/users/${freelancerData.id}/profile`;
@@ -134,7 +128,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       cardsContainer.appendChild(card);
     }
   } catch (err) {
-    showMessage(`Сетевая ошибка: ${err.message}`, true);
+    showMessage(`Network error: ${err.message}`, true);
   }
 
   function showMessage(text, isError) {

@@ -1,13 +1,13 @@
 <!-- app/templates/projects.html -->
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Проекты — Freelance System</title>
+  <title>Projects — Freelance System</title>
   <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
   <style>
-    /* (Ваши стили из ранее) */
+    /* (Your previous styles) */
     .hidden { display: none; }
     .projects-header { margin-bottom: 20px; font-family: var(--font-heading); font-size: 1.5rem; color: var(--color-text); }
     .container { max-width: 900px; margin: 0 auto; padding: 20px; }
@@ -47,63 +47,62 @@
   </style>
 </head>
 <body>
-  <!-- Навигационная панель -->
+  <!-- Navigation bar -->
   <nav style="background-color: var(--color-card-bg); display: flex; justify-content: space-between; align-items: center; padding: 14px 24px; box-shadow: var(--shadow-light); margin-bottom: 24px; border-radius: var(--radius-card); margin: 20px auto; max-width: 900px;">
     <div class="nav-left">
-  <a id="navLogo" href="/" class="logo" style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: bold; color: var(--color-primary);">
-    My profile
-  </a>
-</div>
+      <a id="navLogo" href="/" class="logo" style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: bold; color: var(--color-primary);">
+        My profile
+      </a>
+    </div>
     <div class="nav-right" style="display: flex; align-items: center;">
       <div id="navWelcome" style="margin-right: 16px; color: var(--color-text);"></div>
-      <button id="navLogoutBtn" style="background: none; border: none; color: var(--color-primary); font-size: 1rem; cursor: pointer;">Выйти</button>
+      <button id="navLogoutBtn" style="background: none; border: none; color: var(--color-primary); font-size: 1rem; cursor: pointer;">Log out</button>
     </div>
   </nav>
 
   <div class="container">
-    <h2 class="projects-header">Список проектов</h2>
+    <h2 class="projects-header">Projects list</h2>
     <div id="projectsMessage" class="message"></div>
 
-    <!-- Опционально: можно оставить фильтры поиска -->
+    <!-- Optional: search filters -->
     <div class="search-filter">
-      <input type="text" id="searchInput" placeholder="Поиск по названию…" />
+      <input type="text" id="searchInput" placeholder="Search by title…" />
       <select id="statusFilter">
-        <option value="">Все статусы</option>
-        <option value="open">Открыт</option>
-        <option value="in_progress">В работе</option>
-        <option value="closed">Закрыт</option>
+        <option value="">All statuses</option>
+        <option value="open">Open</option>
+        <option value="in_progress">In progress</option>
+        <option value="closed">Closed</option>
       </select>
     </div>
 
-     <div id="createProjectBtnWrapper" style="margin-bottom: 20px; display: none;">
-    <button id="createProjectBtn" class="primary-btn">Создать проект</button>
-  </div>
-
+    <div id="createProjectBtnWrapper" style="margin-bottom: 20px; display: none;">
+      <button id="createProjectBtn" class="primary-btn">Create project</button>
+    </div>
 
     <div id="createProjectWrapper" class="form-wrapper hidden">
-      <h3>Создать новый проект</h3>
+      <h3>Create new project</h3>
       <div id="createProjectMessage" class="message"></div>
       <form id="createProjectForm">
         <div class="form-group">
-          <label for="projectTitle">Заголовок</label>
-          <input type="text" id="projectTitle" placeholder="Название проекта" required>
+          <label for="projectTitle">Title</label>
+          <input type="text" id="projectTitle" placeholder="Project title" required>
         </div>
         <div class="form-group">
-          <label for="projectDescription">Описание</label>
-          <textarea id="projectDescription" rows="3" placeholder="Расскажите о проекте…"></textarea>
+          <label for="projectDescription">Description</label>
+          <textarea id="projectDescription" rows="3" placeholder="Tell us about the project…"></textarea>
         </div>
         <div class="form-group">
-          <label for="projectBudget">Бюджет (₽)</label>
-          <input type="number" id="projectBudget" step="0.01" min="0.01" placeholder="Например, 1000.00" required>
+          <label for="projectBudget">Budget (₽)</label>
+          <input type="number" id="projectBudget" step="0.01" min="0.01" placeholder="For example, 1000.00" required>
         </div>
-        <button type="submit" class="primary-btn">Создать проект</button>
+        <button type="submit" class="primary-btn">Create project</button>
       </form>
     </div>
 
     <div class="projects-grid" id="projectsList"></div>
   </div>
 
-  <!-- Подключаем скрипты -->
+  <!-- Include scripts -->
   <script src="{{ url_for('static', path='js/common.js') }}?v=1.0"></script>
   <script src="{{ url_for('static', path='js/projects.js') }}?v=1.0"></script>
 </body>

@@ -4,34 +4,33 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Детали проекта — Freelance System</title>
+  <title>Detail project— Freelance System</title>
   <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
 </head>
 <body>
   <nav>
     <div class="nav-left">
-      <a href="/projects" class="logo">← Все проекты</a>
+      <a href="/projects" class="logo">← All project</a>
     </div>
     <div class="nav-right">
-      <button id="logoutBtn" style="display: none;">Выйти</button>
+      <button id="logoutBtn" style="display: none;">Log out</button>
     </div>
   </nav>
 
   <div class="container">
-    <h2 class="detail-header">Детали проекта</h2>
+    <h2 class="detail-header">Project details</h2>
 
     <div class="card project-detail-card" id="projectCard">
-      <div class="card-header" id="projectTitle">Загрузка…</div>
+      <div class="card-header" id="projectTitle">Loading...</div>
       <div class="card-body">
-        <p id="projectDescription">Пожалуйста, подождите...</p>
+        <p id="projectDescription">Please, wait...</p>
       </div>
       <div class="card-footer">
-        <span class="status">Статус: <strong id="projectStatus">—</strong></span>
-        <span>Бюджет: ₽<span id="projectBudget">—</span></span>
+        <span class="status">Status: <strong id="projectStatus">—</strong></span>
+        <span>Bughet: ₽<span id="projectBudget">—</span></span>
       </div>
     </div>
 
-    <!-- Блок, куда будем вставлять форму подачи заявки (если это фрилансер) -->
     <div id="applicationWrapper" style="margin-top: 24px;"></div>
   </div>
 

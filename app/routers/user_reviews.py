@@ -1,5 +1,3 @@
-# app/routers/user_reviews.py
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
@@ -21,15 +19,11 @@ def read_reviews_for_user(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """
-    GET /api/users/{user_id}/reviews/
-    Возвращает все отзывы, которые есть к пользователю user_id.
-    """
     target = db.query(User).filter(User.id == user_id).first()
     if not target:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Пользователь не найден."
+            detail="User not found."
         )
 
     reviews = (
@@ -47,11 +41,6 @@ def read_my_review_of_user(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """
-    GET /api/users/{user_id}/reviews/me
-    Возвращает отзыв, который текущий пользователь (current_user) оставил пользователю user_id.
-    Если ещё не оставлял — 404.
-    """
     review = (
         db.query(UserReview)
         .filter(
@@ -63,7 +52,7 @@ def read_my_review_of_user(
     if not review:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Вы ещё не оставляли отзыв этому пользователю."
+            detail="You have not reviewed this user yet."
         )
     return review
 
@@ -75,38 +64,25 @@ def create_user_review(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """
-    POST /api/users/{user_id}/reviews/
-    Оставить новый отзыв пользователю с id = user_id.
-    Правила:
-    1) Нельзя оставить отзыв самому себе.
-    2) Нельзя оставить более одного отзыва одному и тому же пользователю.
-    3) Работодатель не может отзываться на работодателя, фрилансер — на фрилансера.
-    """
-    # 1) Нельзя себе
     if current_user.id == user_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Нельзя оставить отзыв самому себе."
+            detail="You cannot review yourself."
         )
 
-    # 2) Проверяем, существует ли пользователь, которому оставляем отзыв
     target = db.query(User).filter(User.id == user_id).first()
     if not target:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Пользователь не найден."
+            detail="User not found."
         )
 
-    # 3) Проверяем, чтобы роли отличались:
-    #    “employer” может оставлять отзыв только “freelancer”, и наоборот
     if current_user.role == target.role:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Нельзя оставлять отзывы пользователям с вашей же ролью."
+            detail="You can only review users with a different role."
         )
 
-    # 4) Проверяем, не оставлял ли текущий уже отзыв этому же пользователю
     existing = (
         db.query(UserReview)
         .filter(
@@ -118,10 +94,9 @@ def create_user_review(
     if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Вы уже оставляли отзыв этому пользователю."
+            detail="You have already reviewed this user."
         )
 
-    # 5) Создаём новый отзыв
     new_review = UserReview(
         reviewer_id=current_user.id,
         reviewed_id=user_id,

@@ -1,15 +1,13 @@
-// app/static/js/register.js
-
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("registerForm");
   const messageDiv = document.getElementById("registerMessage");
 
-  // убедимся, что блок скрыт изначально
+  // Make sure the message block is hidden initially
   messageDiv.style.display = "none";
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    // очищаем предыдущее сообщение
+    // Clear previous message
     messageDiv.innerText = "";
     messageDiv.className = "message";  
     messageDiv.style.display = "none";
@@ -19,27 +17,27 @@ document.addEventListener("DOMContentLoaded", () => {
     const role = document.getElementById("registerRole").value;
 
     try {
-      console.log("[register.js] Отправляем POST /api/users/ (регистрация) с:", { email, role });
+      console.log("[register.js] Sending POST /api/users/ (registration) with:", { email, role });
       const resp = await fetch(`${API_BASE}/api/users/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password, role })
       });
 
-      console.log("[register.js] Ответ /api/users/ статус =", resp.status);
+      console.log("[register.js] Response /api/users/ status =", resp.status);
       if (resp.ok) {
         const data = await resp.json();
-        console.log("[register.js] Ответ /api/users/ body =", data);
-        // показываем success-сообщение
+        console.log("[register.js] Response /api/users/ body =", data);
+        // Show success message
         messageDiv.classList.add("success");
-        messageDiv.innerText = `Успешно зарегистрированы: ${data.email}. Пожалуйста, войдите.`;
+        messageDiv.innerText = `Successfully registered: ${data.email}. Please log in.`;
         messageDiv.style.display = "block";
         setTimeout(() => {
           window.location.href = "/";
         }, 2000);
       } else {
-        // читаем JSON с полем detail
-        let errMsg = "Неизвестная ошибка";
+        // Read JSON with detail field
+        let errMsg = "Unknown error";
         const contentType = resp.headers.get("content-type") || "";
         if (contentType.includes("application/json")) {
           const errJson = await resp.json();
@@ -47,7 +45,7 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
           errMsg = await resp.text();
         }
-        // выводим ошибку
+        // Show error
         messageDiv.classList.add("error");
         messageDiv.innerText = errMsg;
         messageDiv.style.display = "block";

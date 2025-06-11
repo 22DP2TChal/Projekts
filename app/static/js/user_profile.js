@@ -1,12 +1,10 @@
-// app/static/js/user_profile.js
-
 document.addEventListener("DOMContentLoaded", async () => {
-  // ── Навигационные элементы ───────────────────────────────────────────────
+  // ── Navigation elements ───────────────────────────────────────────────
   const navLogo            = document.getElementById("navLogo");
   const navWelcome         = document.getElementById("navWelcome");
   const navLogoutBtn       = document.getElementById("navLogoutBtn");
 
-  // ── Элементы профиля ─────────────────────────────────────────────────────
+  // ── Profile elements ─────────────────────────────────────────────────────
   const profileContent     = document.getElementById("profileContent");
   const editProfileWrapper = document.getElementById("editProfileWrapper");
   const editProfileForm    = document.getElementById("editProfileForm");
@@ -14,14 +12,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   const tagsInput          = document.getElementById("tagsInput");
   const editProfileMsg     = document.getElementById("editProfileMessage");
 
-  // ── Элементы раздела отзывов ─────────────────────────────────────────────
+  // ── Reviews section elements ─────────────────────────────────────────────
   const userReviewsSection = document.querySelector(".reviews-section");
   const userReviewsList    = document.getElementById("userReviewsList");
   const leaveReviewWrapper = document.getElementById("leaveReviewWrapper");
   const leaveReviewForm    = document.getElementById("leaveReviewForm");
   const leaveReviewMsg     = document.getElementById("leaveReviewMessage");
 
-  // 1) Извлекаем userId из URL: /users/{id}/profile
+  // 1) Extract userId from URL: /users/{id}/profile
   const parts = window.location.pathname.split("/");
   let userId = null;
   for (let i = parts.length - 1; i >= 0; i--) {
@@ -32,19 +30,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
   if (userId === null) {
-    profileContent.innerHTML = "<p>Неверный адрес профиля.</p>";
+    profileContent.innerHTML = "<p>Invalid profile URL.</p>";
     if (userReviewsSection) userReviewsSection.style.display = "none";
     if (editProfileWrapper) editProfileWrapper.style.display = "none";
     return;
   }
 
-  // 2) Получаем currentUser: если не залогинен → редирект
+  // 2) Get currentUser: if not logged in → redirect
   let currentUser = null;
   try {
     currentUser = await requireAuth();
     navLogoutBtn.style.display = "inline";
     navLogoutBtn.addEventListener("click", logout);
-    navWelcome.innerText = `Привет, ${currentUser.email}`;
+    navWelcome.innerText = `Hello, ${currentUser.email}`;
     if (navLogo && window.location.pathname.includes("/profile")) {
       navLogo.href = "/projects";
     }
@@ -53,26 +51,26 @@ document.addEventListener("DOMContentLoaded", async () => {
     navWelcome.innerText = "";
   }
 
-  // 3) Загружаем профиль пользователя: GET /api/users/{userId}
+  // 3) Load user profile: GET /api/users/{userId}
   let targetUser = null;
   try {
-    profileContent.innerHTML = "<p>Загрузка профиля…</p>";
+    profileContent.innerHTML = "<p>Loading profile…</p>";
     const resp = await fetch(`${API_BASE}/api/users/${userId}`, {
       headers: currentUser ? { "Authorization": `Bearer ${getToken()}` } : {}
     });
     if (!resp.ok) {
       if (resp.status === 404) {
-        profileContent.innerHTML = "<p>Пользователь не найден.</p>";
+        profileContent.innerHTML = "<p>User not found.</p>";
       } else {
-        profileContent.innerHTML = `<p>Ошибка ${resp.status} при загрузке профиля.</p>`;
+        profileContent.innerHTML = `<p>Error ${resp.status} while loading profile.</p>`;
       }
       if (userReviewsSection) userReviewsSection.style.display = "none";
       if (editProfileWrapper) editProfileWrapper.style.display = "none";
       return;
     }
     targetUser = await resp.json();
-    // Рендерим данные профиля, включая tags (массив объектов)
-    // Собираем строку из targetUser.tags: ["Python","FastAPI"] → "Python, FastAPI"
+    // Render profile data, including tags (array of objects)
+    // Convert targetUser.tags: ["Python","FastAPI"] → "Python, FastAPI"
     const tagsArray = Array.isArray(targetUser.tags)
       ? targetUser.tags.map(t => t.name)
       : [];
@@ -81,29 +79,29 @@ document.addEventListener("DOMContentLoaded", async () => {
     profileContent.innerHTML = `
       <div class="profile-field"><span class="label">ID:</span> ${targetUser.id}</div>
       <div class="profile-field"><span class="label">Email:</span> ${targetUser.email}</div>
-      <div class="profile-field"><span class="label">Роль:</span> ${targetUser.role}</div>
-      <div class="profile-field"><span class="label">Статус:</span> ${targetUser.status}</div>
-      <div class="profile-field"><span class="label">О себе:</span> ${(targetUser.about) ? targetUser.about : "<em>– не указано –</em>"}</div>
-      <div class="profile-field"><span class="label">Теги:</span> ${(tagsArray.length) ? tagsString : "<em>– нет тегов –</em>"}</div>
+      <div class="profile-field"><span class="label">Role:</span> ${targetUser.role}</div>
+      <div class="profile-field"><span class="label">Status:</span> ${targetUser.status}</div>
+      <div class="profile-field"><span class="label">About:</span> ${(targetUser.about) ? targetUser.about : "<em>– not specified –</em>"}</div>
+      <div class="profile-field"><span class="label">Tags:</span> ${(tagsArray.length) ? tagsString : "<em>– no tags –</em>"}</div>
     `;
 
-    // Заполняем поля формы «Редактировать профиль»
+    // Fill in the "Edit Profile" form fields
     if (aboutText && typeof targetUser.about !== "undefined") {
       aboutText.value = targetUser.about;
     }
     if (tagsInput) {
-      tagsInput.value = tagsString; // строка через запятую
+      tagsInput.value = tagsString; // comma-separated string
     }
   } catch (err) {
-    profileContent.innerHTML = `<p>Сетевая ошибка: ${err.message}</p>`;
+    profileContent.innerHTML = `<p>Network error: ${err.message}</p>`;
     if (userReviewsSection) userReviewsSection.style.display = "none";
     if (editProfileWrapper) editProfileWrapper.style.display = "none";
     return;
   }
 
-  // 4) Показываем форму редактирования только если:
-  //    – текущий пользователь — фрилансер (role === "freelancer")
-  //    – и он просматривает СВОЙ профиль (currentUser.id === userId)
+  // 4) Show edit form only if:
+  //    – current user is a freelancer (role === "freelancer")
+  //    – and viewing THEIR OWN profile (currentUser.id === userId)
   if (currentUser 
       && currentUser.role === "freelancer" 
       && currentUser.id === userId) {
@@ -116,23 +114,23 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  // 5) Обработка сабмита формы «Редактировать профиль»
+  // 5) Handle "Edit Profile" form submit
   if (editProfileForm) {
     editProfileForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       editProfileMsg.style.display = "none";
 
       const newAbout = aboutText.value.trim();
-      // Разбиваем строку "Python, FastAPI" → ["Python","FastAPI"]
+      // Split string "Python, FastAPI" → ["Python","FastAPI"]
       const newTags  = tagsInput.value
         .split(",")
         .map(s => s.trim())
         .filter(s => s.length > 0);
 
-      // Собираем данные в body
+      // Prepare body data
       const bodyData = {
         about: newAbout,
-        tags:  newTags        // массив строк
+        tags:  newTags        // array of strings
       };
 
       try {
@@ -147,26 +145,26 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (resp.ok) {
           const updated = await resp.json();
 
-          // Обновляем “О себе” и “Теги” в profileContent
+          // Update “About” and “Tags” in profileContent
           const fields = profileContent.querySelectorAll(".profile-field");
-          // fields[4] — “О себе”, fields[5] — “Теги”
+          // fields[4] — “About”, fields[5] — “Tags”
           if (fields.length >= 6) {
-            fields[4].innerHTML = `<span class="label">О себе:</span> ${(updated.about) ? updated.about : "<em>– не указано –</em>"}`;
-            // Собираем строку из updated.tags (массив объектов {id,name})
+            fields[4].innerHTML = `<span class="label">About:</span> ${(updated.about) ? updated.about : "<em>– not specified –</em>"}`;
+            // Convert updated.tags (array of objects {id,name}) to string
             const updatedTagsArr    = Array.isArray(updated.tags) ? updated.tags.map(t => t.name) : [];
             const updatedTagsString = updatedTagsArr.join(", ");
-            fields[5].innerHTML = `<span class="label">Теги:</span> ${updatedTagsArr.length ? updatedTagsString : "<em>– нет тегов –</em>"}`;
+            fields[5].innerHTML = `<span class="label">Tags:</span> ${updatedTagsArr.length ? updatedTagsString : "<em>– no tags –</em>"}`;
           }
 
-          // Обновляем значения полей формы, чтобы сохранить их в том виде, как вернул сервер
+          // Update form fields to match server response
           aboutText.value = updated.about || "";
           tagsInput.value = (updated.tags || []).map(t => t.name).join(", ");
 
           editProfileMsg.className = "message success";
-          editProfileMsg.innerText = "Профиль успешно обновлён.";
+          editProfileMsg.innerText = "Profile successfully updated.";
           editProfileMsg.style.display = "block";
         } else {
-          let errMsg = `Ошибка ${resp.status}`;
+          let errMsg = `Error ${resp.status}`;
           const contentType = resp.headers.get("content-type") || "";
           if (contentType.includes("application/json")) {
             const data = await resp.json();
@@ -178,30 +176,30 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
       } catch (networkError) {
         editProfileMsg.className = "message error";
-        editProfileMsg.innerText = `Сетевая ошибка: ${networkError.message}`;
+        editProfileMsg.innerText = `Network error: ${networkError.message}`;
         editProfileMsg.style.display = "block";
       }
     });
   }
 
-  // 6) Загрузка и рендеринг отзывов (без изменений)
+  // 6) Load and render reviews (no changes)
   async function loadAllReviews() {
-    userReviewsList.innerHTML = "<p>Загрузка отзывов…</p>";
+    userReviewsList.innerHTML = "<p>Loading reviews…</p>";
     try {
       const resp = await fetch(`${API_BASE}/api/users/${userId}/reviews/`, {
         headers: currentUser ? { "Authorization": `Bearer ${getToken()}` } : {}
       });
       if (!resp.ok) {
         if (resp.status === 404) {
-          userReviewsList.innerHTML = "<p>Пользователь не найден. Нельзя загрузить отзывы.</p>";
+          userReviewsList.innerHTML = "<p>User not found. Cannot load reviews.</p>";
         } else {
-          userReviewsList.innerHTML = `<p>Ошибка ${resp.status} при загрузке отзывов.</p>`;
+          userReviewsList.innerHTML = `<p>Error ${resp.status} while loading reviews.</p>`;
         }
         return;
       }
       const reviews = await resp.json();
       if (!reviews.length) {
-        userReviewsList.innerHTML = "<p>Пока нет отзывов об этом пользователе.</p>";
+        userReviewsList.innerHTML = "<p>There are no reviews for this user yet.</p>";
         return;
       }
       userReviewsList.innerHTML = "";
@@ -210,38 +208,38 @@ document.addEventListener("DOMContentLoaded", async () => {
         card.className = "review-card";
 
         const authorLine = document.createElement("p");
-        authorLine.innerHTML = `<span class="label">Отзыв от пользователя #${r.reviewer_id}:</span>`;
+        authorLine.innerHTML = `<span class="label">Review from user #${r.reviewer_id}:</span>`;
         card.appendChild(authorLine);
 
         const ratingLine = document.createElement("p");
-        ratingLine.innerHTML = `<span class="label">Рейтинг:</span> ${r.rating}`;
+        ratingLine.innerHTML = `<span class="label">Rating:</span> ${r.rating}`;
         card.appendChild(ratingLine);
 
         if (r.comment) {
           const commentLine = document.createElement("p");
-          commentLine.innerHTML = `<span class="label">Комментарий:</span> ${r.comment}`;
+          commentLine.innerHTML = `<span class="label">Comment:</span> ${r.comment}`;
           card.appendChild(commentLine);
         }
 
         const dateLine = document.createElement("small");
         const dt = new Date(r.created_at);
-        dateLine.innerText = `Дата: ${dt.toLocaleDateString("ru-RU")} ${dt.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}`;
+        dateLine.innerText = `Date: ${dt.toLocaleDateString("ru-RU")} ${dt.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}`;
         card.appendChild(dateLine);
 
         userReviewsList.appendChild(card);
       });
     } catch (err) {
-      userReviewsList.innerHTML = `<p>Сетевая ошибка при загрузке отзывов: ${err.message}</p>`;
+      userReviewsList.innerHTML = `<p>Network error while loading reviews: ${err.message}</p>`;
     }
   }
 
   await loadAllReviews();
 
-  // 7) Логика формы «оставить отзыв» (без изменений)
+  // 7) Logic for "leave a review" form (no changes)
   if (!currentUser) {
     const info = document.createElement("p");
     info.className = "message info";
-    info.innerText = "Только зарегистрированные пользователи могут оставлять отзывы.";
+    info.innerText = "Only registered users can leave reviews.";
     userReviewsList.parentNode.insertBefore(info, leaveReviewWrapper);
     leaveReviewWrapper.style.display = "none";
     return;
@@ -259,7 +257,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         leaveReviewWrapper.style.display = "none";
         const info = document.createElement("p");
         info.className = "message info";
-        info.innerText = `Вы уже оставили отзыв (рейтинг ${myReview.rating}).`;
+        info.innerText = `You have already left a review (rating ${myReview.rating}).`;
         userReviewsList.parentNode.insertBefore(info, leaveReviewWrapper);
       } else if (respMe.status === 404) {
         leaveReviewWrapper.style.display = "block";
@@ -267,7 +265,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         leaveReviewWrapper.style.display = "none";
         const errInfo = document.createElement("p");
         errInfo.className = "message error";
-        errInfo.innerText = "Не удалось проверить возможность оставить отзыв.";
+        errInfo.innerText = "Could not verify review permission.";
         userReviewsList.parentNode.insertBefore(errInfo, leaveReviewWrapper);
       }
     } catch {

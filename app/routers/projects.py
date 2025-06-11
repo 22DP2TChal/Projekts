@@ -1,11 +1,8 @@
-# app/routers/projects.py
-
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, func
 from typing import Literal, Optional, List
 
-# Импорты из пакета app
 from app.database import get_db
 from app.schemas import ProjectCreate, ProjectOut, ProjectUpdate
 from app.models import Project, Application
@@ -20,9 +17,6 @@ def create_project(
     db: Session = Depends(get_db),
     current_user=Depends(require_employer),
 ):
-    """
-    Создание проекта (только employer).
-    """
     new_project = Project(
         title=project_in.title,
         description=project_in.description,
@@ -38,18 +32,14 @@ def create_project(
 
 @router.get("/", response_model=List[ProjectOut])
 def read_projects(
-    search: Optional[str] = Query(None, description="Поиск по заголовку, ILIKE"),
+    search: Optional[str] = Query(None, description="Search by title (ILIKE)"),
     status: Optional[Literal["open", "in_progress", "closed"]] = Query(
-        None, description="Фильтрация по статусу"
+        None, description="Filter by status"
     ),
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
 ):
-    """
-    Получить список проектов (публично), с фильтрацией по заголовку и статусу.
-    Сортируются по created_at DESC.
-    """
     query = db.query(Project)
 
     if search:
@@ -81,7 +71,7 @@ def read_project(project_id: int, db: Session = Depends(get_db)):
 @router.put("/{project_id}", response_model=ProjectOut)
 def update_project(
     project_id: int,
-    project_in: ProjectUpdate,  # <-- здесь используется исправленный ProjectUpdate
+    project_in: ProjectUpdate,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_active_user)
 ):
@@ -92,7 +82,6 @@ def update_project(
     if project.employer_id != current_user.id and current_user.role != "admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
 
-    # Обновляем только те поля, которые не None
     if project_in.title is not None:
         project.title = project_in.title
     if project_in.description is not None:
@@ -106,15 +95,13 @@ def update_project(
     db.refresh(project)
     return project
 
+
 @router.delete("/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_project(
     project_id: int,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_active_user),
 ):
-    """
-    Удаление проекта (только владелец или admin).
-    """
     project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
         raise HTTPException(
@@ -139,12 +126,6 @@ def project_statistics(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_active_user),
 ):
-    """
-    Статистика по проекту:
-      - count: число заявок,
-      - avg_price: средняя предложенная цена среди всех заявок на этот проект.
-    Доступен только для владельца проекта или admin.
-    """
     project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
         raise HTTPException(
@@ -158,7 +139,6 @@ def project_statistics(
             detail="Not authorized"
         )
 
-    # Агрегируем данные из таблицы Application
     stats = (
         db.query(
             func.count(Application.id).label("application_count"),

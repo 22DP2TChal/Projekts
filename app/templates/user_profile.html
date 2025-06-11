@@ -1,76 +1,57 @@
-<!-- app/templates/user_profile.html -->
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Профиль пользователя — Freelance System</title>
+  <title>User Profile — Freelance System</title>
   <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
 </head>
 <body>
-  <!-- Навигация, логотип, кнопка “Выйти” и т.п. -->
   <nav style="background-color: var(--color-card-bg); display: flex; justify-content: space-between; align-items: center; padding: 12px 24px; box-shadow: var(--shadow-light); margin-bottom: 24px; border-radius: var(--radius-card); max-width: 900px; margin: 0 auto;">
     <a id="navLogo" href="/project" class="logo" style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: bold; color: var(--color-primary);">Freelance System</a>
     <div>
       <span id="navWelcome" style="margin-right: 16px;"></span>
-      <button id="navLogoutBtn" style="background: none; border: none; color: var(--color-primary); cursor: pointer; font-size: 1rem;">Выйти</button>
+      <button id="navLogoutBtn" style="background: none; border: none; color: var(--color-primary); cursor: pointer; font-size: 1rem;">Logout</button>
     </div>
   </nav>
 
-  <!-- Карточка профиля -->
   <div class="profile-card" style="max-width: 600px; margin: 0 auto 24px auto; background: var(--color-card-bg); padding: 16px; border-radius: var(--radius-card); box-shadow: var(--shadow-light);">
-    <h2>Профиль пользователя</h2>
-    <div id="profileContent">
-      <!-- JS подставит сюда ID, Email, Role, Status и т.д. -->
-    </div>
+    <h2>User Profile</h2>
+    <div id="profileContent"></div>
   </div>
-<!-- … код выше (навигатор, карточка профиля) … -->
 
-<!-- ==== Форма редактирования профиля ==== -->
-<div id="editProfileWrapper" class="card" style="display: none; margin-top: 24px; padding: 16px; background: var(--color-card-bg); border-radius: var(--radius-card); box-shadow: var(--shadow-light);">
-  <h4>Редактировать профиль</h4>
-  <div id="editProfileMessage" class="message" style="display: none;"></div>
-  <form id="editProfileForm">
-    <!-- Поле «О себе» -->
-    <div class="form-group">
-      <label for="aboutText">О себе:</label>
-      <textarea id="aboutText" rows="4" placeholder="Расскажите о себе…"></textarea>
-    </div>
+  <div id="editProfileWrapper" class="card" style="display: none; margin-top: 24px; padding: 16px; background: var(--color-card-bg); border-radius: var(--radius-card); box-shadow: var(--shadow-light);">
+    <h4>Edit Profile</h4>
+    <div id="editProfileMessage" class="message" style="display: none;"></div>
+    <form id="editProfileForm">
+      <div class="form-group">
+        <label for="aboutText">About Me:</label>
+        <textarea id="aboutText" rows="4" placeholder="Tell something about yourself…"></textarea>
+      </div>
+      <div class="form-group">
+        <label for="tagsInput">Tags (comma-separated):</label>
+        <input type="text" id="tagsInput" placeholder="e.g.: JavaScript, HTML, Django" />
+        <small style="color: #666; font-size: 0.9rem; margin-top: 4px; display: block;">
+          Enter multiple tags separated by commas (no spaces at the beginning or end).
+        </small>
+      </div>
+      <button type="submit" class="primary-btn">Save</button>
+    </form>
+  </div>
 
-    <!-- Новое поле: Теги (через запятую) -->
-    <div class="form-group">
-      <label for="tagsInput">Теги (через запятую):</label>
-      <input type="text" id="tagsInput" placeholder="Например: JavaScript, HTML, Django" />
-      <small style="color: #666; font-size: 0.9rem; margin-top: 4px; display: block;">
-        Введите несколько тегов через запятую (без пробелов в начале/конце).
-      </small>
-    </div>
-
-    <button type="submit" class="primary-btn">Сохранить</button>
-  </form>
-</div>
-
-<!-- … дальше раздел отзывов … -->
-
-
-  <!-- Раздел отзывов -->
   <div class="reviews-section" style="max-width: 600px; margin: 0 auto 24px auto; background: var(--color-card-bg); padding: 16px; border-radius: var(--radius-card); box-shadow: var(--shadow-light);">
-    <h3>Отзывы о пользователе</h3>
-
-    <!-- Здесь будет список всех отзывов -->
+    <h3>User Reviews</h3>
     <div id="userReviewsList">
-      <p>Загрузка отзывов…</p>
+      <p>Loading reviews…</p>
     </div>
-
-    <!-- Форма для оставления нового отзыва (по умолчанию скрыта) -->
     <div id="leaveReviewWrapper" style="display: none; margin-top: 24px; padding: 16px; background: var(--color-card-bg); border-radius: var(--radius-card); box-shadow: var(--shadow-light);">
-      <h4>Оставить отзыв</h4>
+      <h4>Leave a Review</h4>
       <div id="leaveReviewMessage" class="message" style="display: none;"></div>
       <form id="leaveReviewForm">
         <div class="form-group">
-          <label for="reviewRating">Рейтинг (1–5):</label>
+          <label for="reviewRating">Rating (1–5):</label>
           <select id="reviewRating" required>
-            <option value="" disabled selected>Выберите</option>
+            <option value="" disabled selected>Select</option>
             <option value="1">1</option>
             <option value="2">2</option>
             <option value="3">3</option>
@@ -79,17 +60,15 @@
           </select>
         </div>
         <div class="form-group">
-          <label for="reviewComment">Комментарий (необязательно):</label>
-          <textarea id="reviewComment" rows="3" placeholder="Ваши впечатления…"></textarea>
+          <label for="reviewComment">Comment (optional):</label>
+          <textarea id="reviewComment" rows="3" placeholder="Your impressions…"></textarea>
         </div>
-        <button type="submit" class="primary-btn">Отправить отзыв</button>
+        <button type="submit" class="primary-btn">Submit Review</button>
       </form>
     </div>
   </div>
 
-  <!-- Подключаем JS -->
   <script src="{{ url_for('static', path='js/common.js') }}"></script>
   <script src="{{ url_for('static', path='js/user_profile.js') }}"></script>
-  
 </body>
 </html>

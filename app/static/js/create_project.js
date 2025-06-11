@@ -1,49 +1,42 @@
-// app/static/js/create_project.js
-
 document.addEventListener("DOMContentLoaded", async () => {
-  const logoutBtn        = document.getElementById("logoutBtn");
-  const createForm       = document.getElementById("createProjectForm");
-  const messageDiv       = document.getElementById("createProjectMessage");
-  const titleInput       = document.getElementById("projectTitle");
+  const logoutBtn = document.getElementById("logoutBtn");
+  const createForm = document.getElementById("createProjectForm");
+  const messageDiv = document.getElementById("createProjectMessage");
+  const titleInput = document.getElementById("projectTitle");
   const descriptionInput = document.getElementById("projectDescription");
-  const budgetInput      = document.getElementById("projectBudget");
+  const budgetInput = document.getElementById("projectBudget");
 
-  // 1) Проверяем авторизацию и получаем пользователя
-    let user = null;
+  let user = null;
   try {
-    user = await requireAuth(); // если нет токена или он невалиден, JS сам сделает window.location.href = '/'
+    user = await requireAuth();
   } catch {
     return;
   }
 
-
-  // 2) Показываем кнопку «Выйти»
   logoutBtn.style.display = "inline";
   logoutBtn.addEventListener("click", logout);
 
-  // 3) Проверяем роль — только employer
   if (user.role !== "employer") {
     createForm.style.display = "none";
     messageDiv.classList.add("message", "error");
-    messageDiv.innerText = "Только работодатели могут создавать проекты.";
+    messageDiv.innerText = "Only employers can create projects.";
     messageDiv.style.display = "block";
     return;
   }
 
-  // 4) Обработчик отправки формы
   createForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     messageDiv.innerHTML = "";
     messageDiv.className = "message";
     messageDiv.style.display = "none";
 
-    const title       = titleInput.value.trim();
+    const title = titleInput.value.trim();
     const description = descriptionInput.value.trim();
-    const budget      = parseFloat(budgetInput.value);
+    const budget = parseFloat(budgetInput.value);
 
     if (!title || isNaN(budget) || budget <= 0) {
       messageDiv.classList.add("error");
-      messageDiv.innerText = "Пожалуйста, введите корректные заголовок и бюджет.";
+      messageDiv.innerText = "Please enter a valid title and budget.";
       messageDiv.style.display = "block";
       return;
     }
@@ -61,19 +54,17 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (resp.ok) {
         const newProj = await resp.json();
         messageDiv.classList.add("message", "success");
-        messageDiv.innerText = `Проект создан: ${newProj.title}`;
+        messageDiv.innerText = `Project created: ${newProj.title}`;
         messageDiv.style.display = "block";
-        // Очищаем поля
         titleInput.value = "";
         descriptionInput.value = "";
         budgetInput.value = "";
-        // Через пару секунд можно перенаправить на список проектов
         setTimeout(() => {
           window.location.href = "/projects";
         }, 2000);
       } else {
         const contentType = resp.headers.get("content-type") || "";
-        let errMsg = "Неизвестная ошибка";
+        let errMsg = "Unknown error";
         if (contentType.includes("application/json")) {
           const errJson = await resp.json();
           errMsg = errJson.detail || JSON.stringify(errJson);
@@ -86,7 +77,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     } catch (err) {
       messageDiv.classList.add("message", "error");
-      messageDiv.innerText = `Сетевая ошибка: ${err.message}`;
+      messageDiv.innerText = `Network error: ${err.message}`;
       messageDiv.style.display = "block";
     }
   });

@@ -4,7 +4,7 @@ const API_BASE = "http://127.0.0.1:8000";
 
 function saveToken(token) {
   localStorage.setItem("access_token", token);
-  console.log("[common.js] saveToken: token сохранён в localStorage");
+  console.log("[common.js] saveToken: token saved to localStorage");
 }
 
 function getToken() {
@@ -13,14 +13,14 @@ function getToken() {
 
 function clearToken() {
   localStorage.removeItem("access_token");
-  console.log("[common.js] clearToken: token удалён из localStorage");
+  console.log("[common.js] clearToken: token removed from localStorage");
 }
 
 async function requireAuth() {
   const token = getToken();
-  console.log("[common.js] requireAuth: токен из localStorage =", token);
+  console.log("[common.js] requireAuth: token from localStorage =", token);
   if (!token) {
-    console.log("[common.js] requireAuth: нет токена → редирект на /");
+    console.log("[common.js] requireAuth: no token → redirecting to /");
     window.location.href = "/";
     return null;
   }
@@ -30,15 +30,15 @@ async function requireAuth() {
       "Authorization": `Bearer ${token}`
     }
   });
-  console.log("[common.js] requireAuth: GET /users/me статус =", resp.status);
+  console.log("[common.js] requireAuth: GET /users/me status =", resp.status);
   if (!resp.ok) {
     clearToken();
-    console.log("[common.js] requireAuth: некорректный токен → редирект на /");
+    console.log("[common.js] requireAuth: invalid token → redirecting to /");
     window.location.href = "/";
     return null;
   }
   const user = await resp.json();
-  console.log("[common.js] requireAuth: ответ /users/me →", user);
+  console.log("[common.js] requireAuth: /users/me response →", user);
   return user;
 }
 

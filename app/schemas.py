@@ -6,10 +6,6 @@ from datetime import datetime
 from pydantic import BaseModel, EmailStr, Field
 from typing import List, Optional, Literal
 
-
-# ------------------------------
-# 1) User-схемы
-# ------------------------------
 class UserCreate(BaseModel):
     email: EmailStr
     password: str = Field(min_length=6)
@@ -22,8 +18,6 @@ class UserOut(BaseModel):
     role: str
     status: str
     about: Optional[str] = None
-    # если есть теги:
-    # tags: Optional[List[str]] = []
 
     class Config:
         orm_mode = True
@@ -33,10 +27,6 @@ class Token(BaseModel):
     access_token: str
     token_type: str  # "bearer"
 
-
-# ------------------------------
-# 2) Project-схемы
-# ------------------------------
 class ProjectBase(BaseModel):
     title: str = Field(min_length=1, max_length=255)
     description: Optional[str] = None
@@ -66,9 +56,6 @@ class ProjectOut(ProjectBase):
         orm_mode = True
 
 
-# ------------------------------
-# 3) Application-схемы
-# ------------------------------
 class ApplicationBase(BaseModel):
     proposal_text: str
     proposed_price: float = Field(gt=0)
@@ -97,9 +84,6 @@ class ApplicationOut(ApplicationBase):
         orm_mode = True
 
 
-# ------------------------------
-# 4) Review-схемы
-# ------------------------------
 class ReviewBase(BaseModel):
     rating: int = Field(ge=1, le=5)
     comment: Optional[str] = None
@@ -145,31 +129,20 @@ class TagOut(TagBase):
     id: int
 
 
-# --------------------
-# 2. Схемы для User
-# --------------------
-
-# Схема, которой будем отдавать полную информацию о пользователе (UserOut),
-# включая список связанных тегов.
 class UserOut(BaseModel):
     id: int
     email: str
     role: str
     status: str
     about: Optional[str] = None
-    tags: List[TagOut] = []             # В output отдаём список объектов TagOut, а не строк
+    tags: List[TagOut] = []          
 
     class Config:
         orm_mode = True
 
-
-# При создании пользователя (например, регистрация) можно оставить прежними,
-# либо добавить tags=Optional[List[str]] по необходимости. Но здесь нас интересует обновление.
-
-# Схема для обновления профиля пользователя:
 class UserUpdate(BaseModel):
     about: Optional[str] = None
-    tags: Optional[List[str]] = None     # Принимаем список имён тегов (строки)
+    tags: Optional[List[str]] = None     
 
     class Config:
         orm_mode = True

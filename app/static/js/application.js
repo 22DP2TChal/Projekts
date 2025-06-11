@@ -1,11 +1,9 @@
-// app/static/js/application.js
-
 document.addEventListener("DOMContentLoaded", async () => {
-  // 1) Разбор projectId из URL
+  // 1) Parse projectId from URL
   const pathParts = window.location.pathname.split("/");
   const projectId = parseInt(pathParts[pathParts.length - 1] || pathParts[pathParts.length - 2]);
 
-  // 2) Ссылки на DOM-элементы
+  // 2) DOM element references
   const projectTitleEl  = document.getElementById("projectTitle");
   const projectDescEl   = document.getElementById("projectDescription");
   const projectBudgetEl = document.getElementById("projectBudget");
@@ -14,10 +12,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   const applicationWrapper = document.getElementById("applicationWrapper");
   const logoutBtn          = document.getElementById("logoutBtn");
 
-  // 3) Проверка токена — если есть валидный, получаем user, иначе user = null
+  // 3) Check token and get current user (or null if unauthenticated)
   let user = null;
   try {
-    user = await requireAuth(); // если нет токена или он невалиден: сюда упадёт и мы оставим user = null
+    user = await requireAuth(); // If invalid token: this throws and user stays null
   } catch {
     user = null;
   }
@@ -27,37 +25,36 @@ document.addEventListener("DOMContentLoaded", async () => {
     logoutBtn.addEventListener("click", logout);
   }
 
-  // 4) Загружаем данные о проекте (доступно любому)
+  // 4) Load project data (publicly accessible)
   let projectData;
   try {
     const resp = await fetch(`${API_BASE}/api/projects/${projectId}`, {
       headers: user ? { "Authorization": `Bearer ${getToken()}` } : {}
     });
     if (!resp.ok) {
-      projectTitleEl.innerText = "Проект не найден";
+      projectTitleEl.innerText = "Project not found";
       projectDescEl.innerText = "";
       projectBudgetEl.innerText = "-";
       projectStatusEl.innerText = "-";
-      return; // Ранний выход: больше ничего не рисуем
+      return;
     }
     projectData = await resp.json();
   } catch (err) {
-    projectTitleEl.innerText = "Ошибка загрузки проекта";
+    projectTitleEl.innerText = "Error loading project";
     projectDescEl.innerText = err.message;
     projectBudgetEl.innerText = "-";
     projectStatusEl.innerText = "-";
     return;
   }
 
-  // 5) Выводим данные
+  // 5) Render project data
   projectTitleEl.innerText  = projectData.title;
-  projectDescEl.innerText   = projectData.description || "— Нет описания —";
+  projectDescEl.innerText   = projectData.description || "— No description —";
   projectBudgetEl.innerText = projectData.budget.toFixed(2);
   projectStatusEl.innerText = projectData.status;
 
-  // 6) Если пользователь — фрилансер и проект «open», отрисовываем форму подачи/редактирования
+  // 6) If user is a freelancer and project is "open", render application form
   if (user && user.role === "freelancer" && projectData.status === "open") {
-    // Проверим, подавал ли уже заявку
     let existingApp = null;
     try {
       const checkResp = await fetch(
@@ -69,38 +66,40 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (checkResp.ok) {
         existingApp = await checkResp.json();
       }
-    } catch { existingApp = null; }
+    } catch {
+      existingApp = null;
+    }
 
-    // Создадим форму (appendChild), либо «редактировать», либо «новая»
+    // Render form
     applicationWrapper.innerHTML = `
       <div class="application-form" id="appFormContainer">
-        <h3>${existingApp ? "Редактировать заявку" : "Подать заявку"}</h3>
+        <h3>${existingApp ? "Edit Application" : "Submit Application"}</h3>
         <div id="appMessage" class="message"></div>
         <form id="applicationFormElement">
           <div class="form-group">
-            <label for="proposalText">Ваше предложение</label>
+            <label for="proposalText">Your proposal</label>
             <textarea id="proposalText" rows="4"
-              placeholder="Опишите своё видение задачи…" required></textarea>
+              placeholder="Describe your approach to the task…" required></textarea>
           </div>
           <div class="form-group">
-            <label for="proposalPrice">Ваша цена (₽)</label>
+            <label for="proposalPrice">Your price (₽)</label>
             <input type="number" id="proposalPrice" step="0.01" min="0.01"
-                   placeholder="Например, 100.00" required />
+                   placeholder="e.g., 100.00" required />
           </div>
           <button type="submit" class="primary-btn" id="submitAppBtn">
-            ${existingApp ? "Изменить заявку" : "Отправить заявку"}
+            ${existingApp ? "Update Application" : "Submit Application"}
           </button>
         </form>
       </div>
     `;
 
-    // Заполним, если уже была заявка
+    // Pre-fill form if application exists
     if (existingApp) {
       document.getElementById("proposalText").value  = existingApp.proposal_text;
       document.getElementById("proposalPrice").value = existingApp.proposed_price;
     }
 
-    // Вешаем обработчик на submit
+    // Handle form submission
     const applicationFormElem = document.getElementById("applicationFormElement");
     const appMessage          = document.getElementById("appMessage");
     const submitBtn           = document.getElementById("submitAppBtn");
@@ -114,17 +113,16 @@ document.addEventListener("DOMContentLoaded", async () => {
       const proposalPrice = document.getElementById("proposalPrice").value.trim();
 
       if (!proposalText || !proposalPrice) {
-        appMessage.innerHTML = `<p class="message error">Пожалуйста, заполните все поля</p>`;
+        appMessage.innerHTML = `<p class="message error">Please fill in all fields.</p>`;
         submitBtn.disabled = false;
         return;
       }
 
       if (existingApp) {
-        // PUT-запрос на изменение
+        // Update application
         const body = {
           proposal_text: proposalText,
           proposed_price: parseFloat(proposalPrice),
-          // статус оставляем прежним
         };
         try {
           const resp = await fetch(
@@ -139,20 +137,20 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
           );
           if (resp.ok) {
-            appMessage.innerHTML = `<p class="message success">Заявка успешно изменена!</p>`;
+            appMessage.innerHTML = `<p class="message success">Application updated successfully!</p>`;
           } else {
             const errJson = await resp.json();
             const errMsg = errJson.detail || JSON.stringify(errJson);
-            appMessage.innerHTML = `<p class="message error">Ошибка: ${errMsg}</p>`;
+            appMessage.innerHTML = `<p class="message error">Error: ${errMsg}</p>`;
           }
         } catch (networkError) {
-          appMessage.innerHTML = `<p class="message error">Сетевая ошибка: ${networkError.message}</p>`;
+          appMessage.innerHTML = `<p class="message error">Network error: ${networkError.message}</p>`;
         } finally {
           submitBtn.disabled = false;
         }
 
       } else {
-        // POST-запрос на создание новой заявки
+        // Create new application
         const body = {
           proposal_text: proposalText,
           proposed_price: parseFloat(proposalPrice),
@@ -171,16 +169,15 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
           );
           if (resp.status === 201) {
-            appMessage.innerHTML = `<p class="message success">Заявка успешно отправлена!</p>`;
-            // Блокируем поля формы
+            appMessage.innerHTML = `<p class="message success">Application submitted successfully!</p>`;
             Array.from(applicationFormElem.elements).forEach((el) => el.disabled = true);
           } else {
             const errJson = await resp.json();
             const errMsg = errJson.detail || JSON.stringify(errJson);
-            appMessage.innerHTML = `<p class="message error">Ошибка: ${errMsg}</p>`;
+            appMessage.innerHTML = `<p class="message error">Error: ${errMsg}</p>`;
           }
         } catch (networkError) {
-          appMessage.innerHTML = `<p class="message error">Сетевая ошибка: ${networkError.message}</p>`;
+          appMessage.innerHTML = `<p class="message error">Network error: ${networkError.message}</p>`;
         } finally {
           submitBtn.disabled = false;
         }

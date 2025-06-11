@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Freelance System — Вход</title>
+  <title>Freelance System — Join</title>
   <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
   <style>
     .login-container {
@@ -17,7 +17,6 @@
       margin-bottom: 24px;
       color: var(--color-text);
     }
-    /* Сообщение об ошибке/успехе. Скрываем изначально */
     #loginMessage {
       display: none;
       margin-bottom: 16px;
@@ -26,27 +25,26 @@
 </head>
 <body>
   <div class="container login-container">
-    <h2 class="login-header">Войти в систему</h2>
+    <h2 class="login-header">Join system</h2>
 
-    <!-- Блок, куда JS будет писать ошибки -->
     <div id="loginMessage" class="message"></div>
 
     <div class="form-wrapper">
       <form id="loginForm">
         <div class="form-group">
           <label for="loginEmail">Email</label>
-          <input type="email" id="loginEmail" placeholder="Введите email" required>
+          <input type="email" id="loginEmail" placeholder="Enter email" required>
         </div>
         <div class="form-group">
-          <label for="loginPassword">Пароль</label>
-          <input type="password" id="loginPassword" placeholder="Введите пароль" required>
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" placeholder="Enter пароль" required>
         </div>
-        <button type="submit" class="primary-btn" style="width: 100%;">Войти</button>
+        <button type="submit" class="primary-btn" style="width: 100%;">Join</button>
       </form>
     </div>
 
     <div class="login-link" style="text-align: center; margin-top: 16px;">
-      Нет аккаунта? <a href="/register">Зарегистрируйтесь</a>
+      No account? <a href="/register">Create account</a>
     </div>
   </div>
 

@@ -1,50 +1,50 @@
 <!-- app/templates/create_project.html -->
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Создать проект — Freelance System</title>
+  <title>Create Project — Freelance System</title>
   <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
 </head>
 <body>
-  <!-- Навигационная панель -->
+  <!-- Navigation bar -->
   <nav>
     <div class="nav-left">
-      <a href="/projects" class="logo">← Все проекты</a>
+      <a href="/projects" class="logo">← All projects</a>
     </div>
     <div class="nav-right">
-      <button id="logoutBtn" style="display: none;">Выйти</button>
+      <button id="logoutBtn" style="display: none;">Log out</button>
     </div>
   </nav>
 
   <div class="container">
-    <h2 class="projects-header">Создать новый проект</h2>
+    <h2 class="projects-header">Create a new project</h2>
 
-    <!-- Блок для сообщений об ошибке/успехе -->
+    <!-- Block for error/success messages -->
     <div id="createProjectMessage" class="message"></div>
 
-    <!-- Форма создания проекта -->
+    <!-- Project creation form -->
     <div class="form-wrapper">
       <form id="createProjectForm">
         <div class="form-group">
-          <label for="projectTitle">Заголовок</label>
-          <input type="text" id="projectTitle" placeholder="Название проекта" required>
+          <label for="projectTitle">Title</label>
+          <input type="text" id="projectTitle" placeholder="Project title" required>
         </div>
         <div class="form-group">
-          <label for="projectDescription">Описание</label>
-          <textarea id="projectDescription" rows="3" placeholder="Расскажите о проекте…"></textarea>
+          <label for="projectDescription">Description</label>
+          <textarea id="projectDescription" rows="3" placeholder="Tell us about the project…"></textarea>
         </div>
         <div class="form-group">
-          <label for="projectBudget">Бюджет (₽)</label>
-          <input type="number" id="projectBudget" step="0.01" min="0.01" placeholder="Например, 1000.00" required>
+          <label for="projectBudget">Budget (euro)</label>
+          <input type="number" id="projectBudget" step="0.01" min="0.01" placeholder="For example, 1000.00" required>
         </div>
-        <button type="submit" class="primary-btn" style="width: 100%;">Создать проект</button>
+        <button type="submit" class="primary-btn" style="width: 100%;">Create a project</button>
       </form>
     </div>
   </div>
 
-  <!-- Подключаем JS -->
+  <!-- Include JS -->
   <script src="{{ url_for('static', path='js/common.js') }}"></script>
   <script src="{{ url_for('static', path='js/create_project.js') }}"></script>
 </body>

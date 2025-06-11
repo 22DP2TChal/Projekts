@@ -13,25 +13,19 @@ from app.utils import get_current_active_user, require_employer
 
 app = FastAPI()
 
-# Статика и шаблоны
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
 
-# Синхронизируем БД (если ещё не созданы таблицы)
 Base.metadata.create_all(bind=engine)
 
-# --- Подключаем API-роутеры ---
 app.include_router(users.router, prefix="/api/users", tags=["Users"])
 app.include_router(proj_router.router, prefix="/api/projects", tags=["Projects"])
 app.include_router(applications.router, prefix="/api/applications", tags=["Applications"])
 app.include_router(reviews.router, prefix="/api/reviews", tags=["Reviews"])
 
-# Теперь подключение user_reviews.router
-# В нём уже прописан prefix="/api/users/{user_id}/reviews"
 app.include_router(user_reviews.router, tags=["User review"])
 
 
-# --- HTML-страницы ---
 @app.get("/", response_class=HTMLResponse)
 def read_root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})

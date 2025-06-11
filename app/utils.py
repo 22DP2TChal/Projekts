@@ -11,14 +11,11 @@ from app.core import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 from app.database import get_db
 from app.models import User
 
-# 1) Контекст для хеширования паролей
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# 2) Схема для OAuth2 (Bearer-токен)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="users/login")
 
 
-# --- Функции для работы с паролем ---
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
@@ -26,12 +23,8 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 
-# --- Функции для работы с JWT ---
 def create_access_token(data: dict) -> str:
-    """
-    Генерируем JWT с полями data и exp = now + ACCESS_TOKEN_EXPIRE_MINUTES
-    data: {"sub": user_id, ... }
-    """
+
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
@@ -57,7 +50,6 @@ def decode_access_token(token: str) -> dict:
         )
 
 
-# --- Получаем текущего пользователя из токена ---
 def get_current_user(token: str = Depends(oauth2_scheme),
                      db: Session = Depends(get_db)) -> User:
     payload = decode_access_token(token)

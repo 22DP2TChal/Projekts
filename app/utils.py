@@ -34,9 +34,6 @@ def create_access_token(data: dict) -> str:
     return encoded_jwt
 
 def decode_access_token(token: str) -> dict:
-    """
-    Раскодируем JWT; если неверен или просрочен — бросим HTTPException 401.
-    """
     try:
         print(token)
         payload = jwt.decode(str(token), str(SECRET_KEY), algorithms=[ALGORITHM])

@@ -82,7 +82,7 @@ document.addEventListener("DOMContentLoaded", async () => {
               placeholder="Describe your approach to the task…" required></textarea>
           </div>
           <div class="form-group">
-            <label for="proposalPrice">Your price (₽)</label>
+            <label for="proposalPrice">Your price ()</label>
             <input type="number" id="proposalPrice" step="0.01" min="0.01"
                    placeholder="e.g., 100.00" required />
           </div>

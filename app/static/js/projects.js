@@ -58,6 +58,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   searchInput.addEventListener("input", debounceLoad);
   statusFilter.addEventListener("change", debounceLoad);
 
+
+  function truncateText(text, maxLength = 150) {
+  if (!text) return '';
+  return text.length > maxLength ? text.slice(0, maxLength) + '...' : text;
+}
+
   // Main function to load and render the list of projects
   async function loadProjects(user, searchValue, statusValue) {
     projectsListDiv.innerHTML = "";
@@ -99,14 +105,15 @@ document.addEventListener("DOMContentLoaded", async () => {
         card.innerHTML = `
           <div class="card-header">${proj.title}</div>
           <div class="card-body">
-            <p>${ proj.description || "<em>No description</em>" }</p>
-            <p><strong>Budget:</strong> ₽${ proj.budget.toFixed(2) }</p>
+            <p>${truncateText(proj.description || "<em>No description</em>", 60)}</p>
+            <p><strong>Budget:</strong> €${proj.budget.toFixed(2)}</p>
           </div>
           <div class="card-footer">
             <span class="status">Status: ${proj.status}</span>
             <div class="card-buttons"></div>
           </div>
         `;
+
 
         const buttonsContainer = card.querySelector(".card-buttons");
 
@@ -170,7 +177,7 @@ document.addEventListener("DOMContentLoaded", async () => {
               alert(
                 `Project "${proj.title}"\n` +
                 `– Total applications: ${statsData.application_count}\n` +
-                `– Average price: ₽${statsData.avg_price.toFixed(2)}`
+                `– Average price: €${statsData.avg_price.toFixed(2)}`
               );
             } catch (e) {
               alert(`Failed to fetch statistics: ${e.message}`);

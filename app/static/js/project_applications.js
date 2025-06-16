@@ -101,7 +101,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       body.appendChild(pText);
 
       const pPrice = document.createElement("p");
-      pPrice.innerHTML = `<span class="label">Price:</span> ₽${parseFloat(app.proposed_price).toFixed(2)}`;
+      pPrice.innerHTML = `<span class="label">Price:</span> €${parseFloat(app.proposed_price).toFixed(2)}`;
       body.appendChild(pPrice);
 
       const pAppStatus = document.createElement("p");

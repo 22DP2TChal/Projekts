@@ -42,14 +42,34 @@ document.addEventListener("DOMContentLoaded", async () => {
     currentUser = await requireAuth();
     navLogoutBtn.style.display = "inline";
     navLogoutBtn.addEventListener("click", logout);
-    navWelcome.innerText = `Hello, ${currentUser.email}`;
+    navWelcome.innerText = `${currentUser.email}`;
     if (navLogo && window.location.pathname.includes("/profile")) {
       navLogo.href = "/projects";
     }
   } catch {
     navLogoutBtn.style.display = "none";
     navWelcome.innerText = "";
+  
   }
+
+  function updateNavWelcome() {
+  const isNarrow = window.matchMedia("(max-width: 600px)").matches;
+  let email = currentUser.email;
+
+  if (isNarrow && email.length > 10) {
+    email = email.slice(0, 10) + '…';
+  }
+
+  navWelcome.innerText = `${email}`;
+}
+
+// При первом рендере
+updateNavWelcome();
+
+// И пересчитывать при изменении размера окна
+window.matchMedia("(max-width: 600px)").addEventListener('change', updateNavWelcome);
+// Также, если пользователь меняет размер окна «вручную», лучше слушать resize:
+window.addEventListener('resize', updateNavWelcome);
 
   // 3) Load user profile: GET /api/users/{userId}
   let targetUser = null;
@@ -283,7 +303,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       if (!rating || rating < 1 || rating > 5) {
         leaveReviewMsg.className = "message error";
-        leaveReviewMsg.innerText = "Выберите корректный рейтинг (от 1 до 5).";
+        leaveReviewMsg.innerText = "Choose rating (from 1 to 5).";
         leaveReviewMsg.style.display = "block";
         return;
       }
@@ -302,7 +322,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         if (resp.status === 201) {
           leaveReviewMsg.className = "message success";
-          leaveReviewMsg.innerText = "Спасибо! Ваш отзыв опубликован.";
+          leaveReviewMsg.innerText = "Thank you for your review!";
           leaveReviewMsg.style.display = "block";
           Array.from(leaveReviewForm.elements).forEach(el => el.disabled = true);
           await loadAllReviews();
@@ -322,7 +342,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
       } catch (networkError) {
         leaveReviewMsg.className = "message error";
-        leaveReviewMsg.innerText = `Сетевая ошибка: ${networkError.message}`;
+        leaveReviewMsg.innerText = `Network error: ${networkError.message}`;
         leaveReviewMsg.style.display = "block";
       }
     });
